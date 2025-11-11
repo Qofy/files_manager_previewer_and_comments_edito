@@ -12,36 +12,44 @@
   let scope = 'private';
   let lastClickPos = null;
   let pdf = null;
+  let fileId = '';
   
-  $: fileId = $page.params.id;
   $: zoomPercent = Math.round(zoomLevel * 100);
 
   onMount(async () => {
-  if (!browser) return;
+    if (!browser) return;
 
-  const token = localStorage.getItem('token');
-  
-  if (!fileId) {
-    goto('/files');
-    return;
-  }
+    // Get fileId from URL parameters
+    fileId = $page.params.id;
+    
+    console.log('File ID:', fileId); // Debug log
+    
+    if (!fileId || fileId === 'null' || fileId === 'undefined') {
+      console.error('Invalid file ID');
+      alert('Invalid file ID');
+      goto('/files');
+      return;
+    }
 
-  // Wait for PDF.js to load
-  let attempts = 0;
-  while (!window.pdfjsLib && attempts < 50) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    attempts++;
-  }
+    const token = localStorage.getItem('token');
 
-  if (!window.pdfjsLib) {
-    alert('Failed to load PDF.js library');
-    return;
-  }
+    // Wait for PDF.js to load
+    let attempts = 0;
+    while (!window.pdfjsLib && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
 
-  // Load PDF.js
-  const pdfjsLib = window.pdfjsLib;
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    if (!window.pdfjsLib) {
+      alert('Failed to load PDF.js library');
+      return;
+    }
+
+    // Load PDF.js
+    const pdfjsLib = window.pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
     try {
       // Load PDF
       const loadingTask = pdfjsLib.getDocument({
@@ -54,7 +62,7 @@
       await loadComments();
     } catch (error) {
       console.error('Error loading PDF:', error);
-      alert('Failed to load PDF');
+      alert('Failed to load PDF: ' + error.message);
     }
   });
 
