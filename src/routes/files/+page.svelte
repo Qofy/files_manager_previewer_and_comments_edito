@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import FileAside from '$lib/pages/FileAside.svelte';
+	import Aside from '$lib/pages/Aside.svelte';
 	import FileMain from '$lib/pages/FileMain.svelte';
 
 	
@@ -17,7 +17,7 @@
 </svelte:head>
 
 <div class="app-container">
-	<FileAside/>
+	<Aside/>
 	<FileMain/>
 </div>
 

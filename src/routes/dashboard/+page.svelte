@@ -1,6 +1,7 @@
 <script>	
-	import FileAside from '$lib/pages/FileAside.svelte';
-	import SummaryMain from '$lib/pages/SummaryMain.svelte';
+
+	import Aside from '$lib/pages/Aside.svelte';
+import SummaryMain from '$lib/pages/SummaryMain.svelte';
 
 </script>
 
@@ -15,7 +16,7 @@
 </svelte:head>
 
 <div class="app-container">
-	<FileAside/>
+	<Aside/>
 	<!-- <main class="main-content">
 		<div class="top-bar">
 			<div class="search-container">
@@ -74,4 +75,25 @@
 <SummaryMain/>
 </div>
 
+<style>
+	:global(*) {
+		box-sizing: border-box;
+	}
+
+		 :global(body) {
+		margin: 0;
+		font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+		background: #f9f9f9;
+		color: #333;
+	}
+	:global(a) {
+		text-decoration: none;
+		color: inherit;
+	}
+	:global(.app-container) {
+		display: flex;
+		min-height: 100vh;
+		overflow: hidden;
+	}
+</style>
 
