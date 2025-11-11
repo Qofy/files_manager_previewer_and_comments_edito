@@ -33,10 +33,13 @@ export async function POST({ request }) {
 
 		users.set(username, user);
 
-		return json({ 
-			message: 'User registered successfully',
-			username: user.username 
-		}, { status: 201 });
+		return json(
+			{
+				message: 'User registered successfully',
+				username: user.username
+			},
+			{ status: 201 }
+		);
 	} catch (error) {
 		console.error('Registration error:', error);
 		return json({ error: 'Registration failed' }, { status: 500 });

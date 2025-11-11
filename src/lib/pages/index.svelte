@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
       // A very simple Mithril app that displays the server health and a welcome message.
       const App = {
         health: "",
@@ -41,4 +41,4 @@
     </style>
 
     
-
+ -->
