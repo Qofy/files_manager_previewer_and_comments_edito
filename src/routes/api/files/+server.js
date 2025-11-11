@@ -64,8 +64,8 @@ export async function GET({ request }) {
 		}
 
 		// Return files sorted by upload date (newest first)
-		const sortedFiles = [...files].sort((a, b) => 
-			new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+		const sortedFiles = [...files].sort(
+			(a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
 		);
 
 		return json(sortedFiles);

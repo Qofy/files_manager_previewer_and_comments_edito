@@ -163,6 +163,26 @@ Mark an invoice as paid.
 
 ## File & PDF Endpoints
 
+### GET /api/files
+Get list of all files.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+[
+  {
+    "id": "sample-invoice-2025.pdf",
+    "name": "Invoice_2025_Q1.pdf",
+    "type": "pdf",
+    "size": "245 KB",
+    "uploaded_at": "2025-01-15T10:30:00Z",
+    "uploaded_by": "admin"
+  },
+  ...
+]
+```
+
 ### GET /files/:id
 Get a file by ID (for PDF viewing).
 
