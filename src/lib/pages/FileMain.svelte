@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
   import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
-	import Aside from '$lib/pages/Aside.svelte';
+	import Aside from '$lib/pages/FileAside.svelte';
 
 	let files = [];
 	let searchQuery = '';

@@ -1,8 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
-	
-	import Aside from '$lib/pages/Aside.svelte';
-	import Main from '$lib/pages/Main.svelte';
+	import FileAside from '$lib/pages/FileAside.svelte';
+	import FileMain from '$lib/pages/FileMain.svelte';
 
 	
 </script>
@@ -18,21 +17,26 @@
 </svelte:head>
 
 <div class="app-container">
-	<Aside/>
-	<Main/>
+	<FileAside/>
+	<FileMain/>
 </div>
 
 <style>
 	:global(*) {
 		box-sizing: border-box;
 	}
-	:global(body) {
+
+		 :global(body) {
 		margin: 0;
 		font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 		background: #f9f9f9;
 		color: #333;
 	}
-	.app-container {
+	:global(a) {
+		text-decoration: none;
+		color: inherit;
+	}
+	:global(.app-container) {
 		display: flex;
 		min-height: 100vh;
 		overflow: hidden;
