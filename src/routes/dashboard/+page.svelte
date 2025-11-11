@@ -1,7 +1,7 @@
 <script>	
 
 	import Aside from '$lib/pages/Aside.svelte';
-import SummaryMain from '$lib/pages/SummaryMain.svelte';
+	import DashboardMain from '$lib/pages/DashboardMain.svelte';
 
 </script>
 
@@ -72,7 +72,7 @@ import SummaryMain from '$lib/pages/SummaryMain.svelte';
 			</div>
 		</section>
 	</main> -->
-<SummaryMain/>
+<DashboardMain/>
 </div>
 
 <style>

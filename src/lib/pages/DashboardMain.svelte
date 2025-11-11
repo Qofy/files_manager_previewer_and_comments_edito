@@ -200,6 +200,7 @@ import { onMount } from 'svelte';
 			</div>
 			<div class="actions">
 				<i class="fas fa-bell"></i>
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div class="profile" on:click={handleLogout} role="button" tabindex="0"></div>
 			</div>
 		</div>
