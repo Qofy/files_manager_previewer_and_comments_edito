@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
   import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
+	import {goto} from "$app/navigation"
 	import Aside from '$lib/pages/Aside.svelte';
 
 	let files = [];

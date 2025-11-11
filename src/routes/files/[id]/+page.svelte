@@ -17,20 +17,31 @@
   $: zoomPercent = Math.round(zoomLevel * 100);
 
   onMount(async () => {
-    if (!browser) return;
+  if (!browser) return;
 
-    const token = localStorage.getItem('token');
-    
-    if (!fileId) {
-      goto('/files');
-      return;
-    }
+  const token = localStorage.getItem('token');
+  
+  if (!fileId) {
+    goto('/files');
+    return;
+  }
 
-    // Load PDF.js
-    const pdfjsLib = window.pdfjsLib;
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  // Wait for PDF.js to load
+  let attempts = 0;
+  while (!window.pdfjsLib && attempts < 50) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
 
+  if (!window.pdfjsLib) {
+    alert('Failed to load PDF.js library');
+    return;
+  }
+
+  // Load PDF.js
+  const pdfjsLib = window.pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     try {
       // Load PDF
       const loadingTask = pdfjsLib.getDocument({

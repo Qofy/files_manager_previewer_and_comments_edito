@@ -1,42 +1,55 @@
-import { json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
-import { invoices } from '../../+server.js';
+import PDFDocument from 'pdfkit';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request, params }) {
+export async function GET({ request, params }) {
 	try {
 		// Verify authentication
 		const authHeader = request.headers.get('Authorization');
-		if (!authHeader || !authHeader.startsWith('Bearer ')) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
+
+		if (authHeader && authHeader.startsWith('Bearer ')) {
+			const token = authHeader.substring(7);
+			try {
+				jwt.verify(token, JWT_SECRET);
+			} catch {
+				throw error(401, 'Invalid token');
+			}
 		}
 
-		const token = authHeader.substring(7);
-		try {
-			jwt.verify(token, JWT_SECRET);
-		} catch {
-			return json({ error: 'Invalid token' }, { status: 401 });
-		}
+		const fileId = params.id;
 
-		const invoice = invoices.find((inv) => inv.id === params.id);
+		// Generate a dummy PDF
+		const doc = new PDFDocument();
+		const chunks = [];
 
-		if (!invoice) {
-			return json({ error: 'Invoice not found' }, { status: 404 });
-		}
+		doc.on('data', (chunk) => chunks.push(chunk));
 
-		// Mark as paid
-		invoice.paid = true;
-		invoice.status = 'paid';
-
-		return json({
-			success: true,
-			message: 'Invoice marked as paid',
-			invoice
+		const pdfPromise = new Promise((resolve) => {
+			doc.on('end', () => {
+				resolve(Buffer.concat(chunks));
+			});
 		});
-	} catch (error) {
-		console.error('Invoice pay error:', error);
-		return json({ error: 'Failed to mark invoice as paid' }, { status: 500 });
+
+		// Add content to PDF
+		doc.fontSize(25).text(`Sample Document: ${fileId}`, 100, 100);
+		doc.fontSize(12).text('This is a generated sample PDF for demonstration.', 100, 150);
+		doc.text('You can add your own PDF files to replace this.', 100, 170);
+		doc.end();
+
+		const pdfBuffer = await pdfPromise;
+
+		return new Response(pdfBuffer, {
+			headers: {
+				'Content-Type': 'application/pdf',
+				'Content-Disposition': `inline; filename="${fileId}"`,
+				'Cache-Control': 'no-cache'
+			}
+		});
+	} catch (err) {
+		console.error('File generation error:', err);
+		throw error(500, 'Failed to generate file');
 	}
 }
