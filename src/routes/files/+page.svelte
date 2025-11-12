@@ -992,12 +992,15 @@
   .app-container {
     display: flex;
     min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
   }
 
   .main-content {
     flex: 1;
     display: flex;
     overflow: hidden;
+    height: 100vh;
   }
 
   .sidebar {
@@ -1009,6 +1012,7 @@
     padding: 20px 10px;
     overflow-y: auto;
     flex-shrink: 0;
+    height: 100%;
   }
 
   .top-bar {
@@ -1107,7 +1111,11 @@
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
-		width: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
   }
 
   .file-header {
@@ -1117,6 +1125,7 @@
     padding: 10px 15px;
     border-bottom: 1px solid #f0f0f0;
     background: #fafafa;
+    flex-shrink: 0;
   }
 
   .breadcrumb {
@@ -1202,6 +1211,23 @@
     width: 100%;
     border-collapse: collapse;
     table-layout: auto;
+    display: block;
+    overflow-y: auto;
+    flex: 1;
+  }
+  
+  .file-table thead,
+  .file-table tbody {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  
+  .file-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f7f9fb;
   }
 
   .file-table thead th {
@@ -1285,11 +1311,13 @@
   
   .comment-sidebar {
     width: 280px;
-    border-right: 1px solid #eee;
+    border-left: 1px solid #eee;
     display: flex;
     flex-direction: column;
     background: #fff;
     flex-shrink: 0;
+    height: 100vh;
+    overflow: hidden;
   }
   
   .comment-sidebar header {
@@ -1297,11 +1325,13 @@
     border-bottom: 1px solid #eee;
     font-weight: 600;
     color: #0c5489;
+    flex-shrink: 0;
   }
   
   .comments {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    min-height: 0;
   }
   
   .no-comments {
@@ -1345,6 +1375,7 @@
     border-top: 1px solid #eee;
     display: flex;
     gap: 6px;
+    flex-shrink: 0;
   }
   
   .new-comment textarea {
@@ -1384,15 +1415,19 @@
   .viewer-container {
     flex: 1;
     display: flex;
+    flex-direction: column;
     background: #fff;
     overflow: hidden;
+    height: 100vh;
   }
   
   .viewer {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
     position: relative;
     background: #f6f8fa;
+    display: flex;
+    flex-direction: column;
   }
   
   :global(.page) {
@@ -1428,6 +1463,7 @@
     background: #fff;
     border-bottom: 1px solid #eee;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .toolbar button {
@@ -1524,6 +1560,8 @@
 
   #pages {
     padding: 16px;
+    flex: 1;
+    overflow-y: auto;
   }
 
   :global(#pages img),
