@@ -867,6 +867,7 @@
 									class:selected={selected.has(file.id)}
 									draggable="true"
 									on:dragstart={(e) => handleDragStart(e, file)}
+									 on:click={() => handleView(file)}
 								>
 									<td>
 										<input 
@@ -904,54 +905,76 @@
 
 		</div>
 
-		<div class="view-comment-container" class:visible={selectedFile}>
-			{#if selectedFile}
-				<div class="viewer-wrapper">
-					<aside class="comment-sidebar">
-						<header>Comments</header>
-						<div class="comments">
-							{#each sortedComments as comment}
-								<div class="comment">
-									<strong>p.{comment.page}</strong> {comment.text}
-									<br/>
-									<small>{comment.user_id || 'anon'} · {new Date(comment.created_at).toLocaleString()}</small>
-								</div>
-							{/each}
+		<!-- Comment Sidebar - Always Visible -->
+		<aside class="comment-sidebar">
+			<header>Comments</header>
+			<div class="comments">
+				{#if sortedComments.length === 0}
+					<div class="no-comments">
+						<i class="fas fa-comments"></i>
+						<p>No comments yet</p>
+						<small>Select a file and click to add comments</small>
+					</div>
+				{:else}
+					{#each sortedComments as comment}
+						<div class="comment">
+							<strong>p.{comment.page}</strong> {comment.text}
+							<br/>
+							<small>{comment.user_id || 'anon'} · {new Date(comment.created_at).toLocaleString()}</small>
 						</div>
-						<div class="new-comment">
-							<textarea
-								bind:value={commentText}
-								placeholder="Add a comment… (click a spot in the PDF first)"
-							></textarea>
-							<button on:click={handleSendComment} disabled={!canSend}>Send</button>
-						</div>
-					</aside>
-					
-					<main class="viewer" bind:this={viewerEl}>
-						<div class="toolbar">
-							<button on:click={handleZoomOut}>-</button>
-							<span>{zoomPercent}%</span>
-							<button on:click={handleZoomIn}>+</button>
-							<button on:click={handleFit}>Fit</button>
-							{#if dimLabel}
-								<span class="dim-label">{dimLabel}</span>
-							{/if}
-							<label class="scope-toggle">
-								<select bind:value={scope} on:change={handleScopeChange}>
-									<option value="private">My team (private)</option>
-									<option value="public">Public</option>
-								</select>
-							</label>
-							<button on:click={closeViewer} class="close-btn">
-								<i class="fas fa-times"></i> Close
-							</button>
-						</div>
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<div bind:this={pagesEl} on:click={handlePageClick} id="pages"></div>
-					</main>
+					{/each}
+				{/if}
+			</div>
+			<div class="new-comment">
+				<textarea
+					bind:value={commentText}
+					placeholder={selectedFile ? "Add a comment… (click a spot in the file first)" : "Select a file to add comments"}
+					disabled={!selectedFile}
+				></textarea>
+				<button on:click={handleSendComment} disabled={!canSend || !selectedFile}>Send</button>
+			</div>
+		</aside>
+
+		<!-- Viewer - Always show container and toolbar -->
+		<div class="viewer-container">
+			<main class="viewer" bind:this={viewerEl}>
+				<div class="toolbar">
+					<button on:click={handleZoomOut} disabled={!selectedFile}>-</button>
+					<span>{zoomPercent}%</span>
+					<button on:click={handleZoomIn} disabled={!selectedFile}>+</button>
+					<button on:click={handleFit} disabled={!selectedFile}>Fit</button>
+					{#if dimLabel}
+						<span class="dim-label">{dimLabel}</span>
+					{/if}
+					<label class="scope-toggle">
+						<select bind:value={scope} on:change={handleScopeChange} disabled={!selectedFile}>
+							<option value="private">My team (private)</option>
+							<option value="public">Public</option>
+						</select>
+					</label>
+					{#if selectedFile}
+						<button on:click={closeViewer} class="close-btn">
+							<i class="fas fa-times"></i> Close
+						</button>
+					{:else}
+						<span class="no-file-message">
+							<i class="fas fa-info-circle"></i> Select a file to preview
+						</span>
+					{/if}
 				</div>
-			{/if}
+				<!-- File content - Only visible when file is selected -->
+				{#if selectedFile}
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<div bind:this={pagesEl} on:click={handlePageClick} id="pages"></div>
+				{:else}
+					<div class="no-file-placeholder">
+						<i class="fas fa-file-alt"></i>
+						<p>No file selected</p>
+						<small>Click the eye icon on any file to preview it here</small>
+					</div>
+				{/if}
+			</main>
 		</div>
   </main>
 </div>
@@ -978,7 +1001,7 @@
   }
 
   .sidebar {
-    /* width: 35%; */
+    width: 35%;
     background: #fff;
     border-right: 1px solid #e0e0e0;
     display: flex;
@@ -986,13 +1009,6 @@
     padding: 20px 10px;
     overflow-y: auto;
     flex-shrink: 0;
-    transition: width 0.3s ease;
-  }
-  
-  /* When viewer is visible, make sidebar narrower */
-  .main-content:has(.view-comment-container.visible) .sidebar {
-    width: 25%;
-    min-width: 300px;
   }
 
   .top-bar {
@@ -1199,7 +1215,7 @@
   }
 
   .file-table tbody td {
-    padding: 10px 12px;
+    /* padding: 10px 12px; */
     border-bottom: 1px solid #f0f0f0;
     font-size: 14px;
     white-space: nowrap;
@@ -1207,7 +1223,7 @@
   
   .file-table tbody td:last-child {
     text-align: right;
-    min-width: 120px;
+    /* min-width: 120px; */
   }
 
   .file-row {
@@ -1225,8 +1241,8 @@
   .file-name {
     display: flex;
     align-items: center;
-    gap: 8px;
-    max-width: 200px;
+    /* gap: 8px; */
+    max-width: 100px;
     overflow: hidden;
   }
   
@@ -1267,24 +1283,6 @@
   
   /* ========== VIEWER STYLES ========== */
   
-  .view-comment-container {
-    flex: 1;
-    display: none;
-    background: #fff;
-    overflow: hidden;
-  }
-  
-  .view-comment-container.visible {
-    display: flex;
-  }
-  
-  .viewer-wrapper {
-    display: flex;
-    width: 100%;
-    height: 100vh;
-    font-family: system-ui;
-  }
-  
   .comment-sidebar {
     width: 280px;
     border-right: 1px solid #eee;
@@ -1304,6 +1302,33 @@
   .comments {
     flex: 1;
     overflow: auto;
+  }
+  
+  .no-comments {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #888;
+  }
+  
+  .no-comments i {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 16px;
+  }
+  
+  .no-comments p {
+    margin: 0 0 8px 0;
+    font-weight: 600;
+    color: #666;
+  }
+  
+  .no-comments small {
+    color: #999;
+    font-size: 12px;
   }
   
   .comment {
@@ -1330,6 +1355,12 @@
     border: 1px solid #ddd;
     border-radius: 4px;
   }
+  
+  .new-comment textarea:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+    color: #999;
+  }
 
   .new-comment button {
     padding: 8px 16px;
@@ -1348,6 +1379,13 @@
 
   .new-comment button:hover:not(:disabled) {
     background: #094166;
+  }
+  
+  .viewer-container {
+    flex: 1;
+    display: flex;
+    background: #fff;
+    overflow: hidden;
   }
   
   .viewer {
@@ -1403,6 +1441,61 @@
 
   .toolbar button:hover {
     background: #f5faff;
+  }
+  
+  .toolbar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+  }
+  
+  .toolbar select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+  }
+  
+  .no-file-message {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #888;
+    font-size: 14px;
+    font-style: italic;
+  }
+  
+  .no-file-message i {
+    color: #0c5489;
+  }
+  
+  .no-file-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100% - 50px);
+    color: #888;
+    text-align: center;
+    padding: 40px;
+  }
+  
+  .no-file-placeholder i {
+    font-size: 64px;
+    color: #ddd;
+    margin-bottom: 20px;
+  }
+  
+  .no-file-placeholder p {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #666;
+  }
+  
+  .no-file-placeholder small {
+    color: #999;
+    font-size: 14px;
   }
 
   .dim-label {
