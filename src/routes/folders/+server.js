@@ -1,41 +1,8 @@
 import { json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
+import { foldersStorage } from '$lib/server/storage.js';
 
-const JWT_SECRET = 'your-secret-key-change-in-production';
-
-// In-memory folder storage (replace with database in production)
-const foldersStorage = new Map();
-
-// Initialize with default folders
-foldersStorage.set('1', {
-	id: '1',
-	name: 'Documents',
-	path: '/Documents',
-	parent_id: null,
-	owner: 'admin',
-	created_at: new Date().toISOString(),
-	updated_at: new Date().toISOString()
-});
-
-foldersStorage.set('2', {
-	id: '2',
-	name: 'Images',
-	path: '/Images',
-	parent_id: null,
-	owner: 'admin',
-	created_at: new Date().toISOString(),
-	updated_at: new Date().toISOString()
-});
-
-foldersStorage.set('3', {
-	id: '3',
-	name: 'Projects',
-	path: '/Projects',
-	parent_id: null,
-	owner: 'admin',
-	created_at: new Date().toISOString(),
-	updated_at: new Date().toISOString()
-});
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Helper function to verify JWT
 function verifyToken(request) {
@@ -136,6 +103,3 @@ export async function POST({ request }) {
 
 	return json({ folder: newFolder }, { status: 201 });
 }
-
-// Export the storage for use in other endpoints
-export { foldersStorage };

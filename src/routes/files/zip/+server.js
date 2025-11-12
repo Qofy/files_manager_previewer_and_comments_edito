@@ -1,17 +1,9 @@
 import { json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import archiver from 'archiver';
+import { filesStorage } from '$lib/server/storage.js';
 
-const JWT_SECRET = 'your-secret-key-change-in-production';
-
-// Import files storage
-let filesStorage;
-try {
-	const filesModule = await import('../+server.js');
-	filesStorage = filesModule.filesStorage;
-} catch (e) {
-	filesStorage = new Map();
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Helper function to verify JWT
 function verifyToken(request) {
