@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
@@ -473,8 +473,7 @@
         <i class="fas fa-arrow-left"></i> Back
       </button>
     </div>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    
     <div bind:this={pagesEl} on:click={handlePageClick} id="pages"></div>
   </main>
 </div>
@@ -653,4 +652,4 @@
     margin: 0 auto;
     overflow-x: auto;
   }
-</style>
+</style> -->

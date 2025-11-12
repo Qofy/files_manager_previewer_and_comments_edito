@@ -953,8 +953,6 @@
 				</div>
 			{/if}
 		</div>
-
-
   </main>
 </div>
 
@@ -973,26 +971,28 @@
     min-height: 100vh;
   }
 
-  /* .sidebar {
-    width: 60px;
+  .main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    /* width: 35%; */
     background: #fff;
     border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding-top: 10px;
-  } */
-  .main-content {
-    flex: 1;
-    padding: 20px 30px;
+    padding: 20px 10px;
     overflow-y: auto;
-    display: flex;
-    gap: 20px;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
   }
   
-  .sidebar {
-    flex: 1;
-    min-width: 0;
+  /* When viewer is visible, make sidebar narrower */
+  .main-content:has(.view-comment-container.visible) .sidebar {
+    width: 25%;
+    min-width: 300px;
   }
 
   .top-bar {
@@ -1091,6 +1091,7 @@
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
+		width: 100%;
   }
 
   .file-header {
@@ -1184,6 +1185,7 @@
   .file-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto;
   }
 
   .file-table thead th {
@@ -1200,6 +1202,12 @@
     padding: 10px 12px;
     border-bottom: 1px solid #f0f0f0;
     font-size: 14px;
+    white-space: nowrap;
+  }
+  
+  .file-table tbody td:last-child {
+    text-align: right;
+    min-width: 120px;
   }
 
   .file-row {
@@ -1218,11 +1226,20 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    max-width: 200px;
+    overflow: hidden;
+  }
+  
+  .file-name span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .file-name i {
     font-size: 18px;
     color: #0c5489;
+    flex-shrink: 0;
   }
 
   .icon-btn {
@@ -1231,6 +1248,16 @@
     cursor: pointer;
     padding: 4px 8px;
     color: #0c5489;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+  }
+  
+  .icon-btn i {
+    pointer-events: none;
   }
 
   .icon-btn:hover {
@@ -1241,32 +1268,30 @@
   /* ========== VIEWER STYLES ========== */
   
   .view-comment-container {
+    flex: 1;
     display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     background: #fff;
-    z-index: 1000;
+    overflow: hidden;
   }
   
   .view-comment-container.visible {
-    display: block;
+    display: flex;
   }
   
   .viewer-wrapper {
     display: flex;
+    width: 100%;
     height: 100vh;
     font-family: system-ui;
   }
   
   .comment-sidebar {
-    width: 320px;
+    width: 280px;
     border-right: 1px solid #eee;
     display: flex;
     flex-direction: column;
     background: #fff;
+    flex-shrink: 0;
   }
   
   .comment-sidebar header {
