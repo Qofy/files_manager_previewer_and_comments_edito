@@ -1,9 +1,12 @@
 import { error, json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
-import PDFDocument from 'pdfkit';
 import { filesStorage } from '$lib/server/storage.js';
+import fs from 'fs';
+import path from 'path';
+import PDFDocument from 'pdfkit';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
 // Helper function to verify JWT
 function verifyToken(request) {
@@ -43,69 +46,148 @@ export async function GET({ request, params }) {
 			throw error(400, 'File ID is required');
 		}
 
-		console.log('Generating PDF for:', fileId);
+		// Get file metadata from storage
+		const fileMetadata = filesStorage.get(fileId);
 
-		// Generate a PDF document
+		if (!fileMetadata) {
+			throw error(404, 'File not found');
+		}
+
+		console.log('Serving file:', fileId, fileMetadata.name);
+
+		// Check if actual file exists on disk
+		const filePath = path.join(UPLOAD_DIR, fileId);
+		
+		if (fs.existsSync(filePath)) {
+			// Serve the actual file
+			const fileBuffer = fs.readFileSync(filePath);
+			const contentType = getContentType(fileMetadata.type);
+
+			return new Response(fileBuffer, {
+				status: 200,
+				headers: {
+					'Content-Type': contentType,
+					'Content-Disposition': `inline; filename="${fileMetadata.name}"`,
+					'Content-Length': fileBuffer.length.toString(),
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		// If file is stored as base64 data in metadata
+		if (fileMetadata.data) {
+			const fileBuffer = Buffer.from(fileMetadata.data, 'base64');
+			const contentType = getContentType(fileMetadata.type);
+
+			return new Response(fileBuffer, {
+				status: 200,
+				headers: {
+					'Content-Type': contentType,
+					'Content-Disposition': `inline; filename="${fileMetadata.name}"`,
+					'Content-Length': fileBuffer.length.toString(),
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		// Fallback: Generate sample PDF for demonstration
+		if (fileMetadata.type === 'pdf') {
+			console.log('Generating sample PDF for:', fileId);
+			const pdfBuffer = await generateSamplePDF(fileMetadata);
+			
+			return new Response(pdfBuffer, {
+				status: 200,
+				headers: {
+					'Content-Type': 'application/pdf',
+					'Content-Disposition': `inline; filename="${fileMetadata.name}"`,
+					'Content-Length': pdfBuffer.length.toString(),
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		// For non-PDF files without content
+		throw error(404, 'File content not found. Please upload the file again.');
+	} catch (err) {
+		console.error('File serving error:', err);
+		if (err.status) {
+			throw err;
+		}
+		throw error(500, `Failed to serve file: ${err.message}`);
+	}
+}
+
+// Helper function to generate a sample PDF for demonstration
+async function generateSamplePDF(fileMetadata) {
+	return new Promise((resolve, reject) => {
 		const doc = new PDFDocument();
 		const chunks = [];
 
-		// Collect PDF data chunks
 		doc.on('data', (chunk) => chunks.push(chunk));
-
-		// Create promise that resolves when PDF is complete
-		const pdfPromise = new Promise((resolve, reject) => {
-			doc.on('end', () => {
-				resolve(Buffer.concat(chunks));
-			});
-			doc.on('error', (err) => {
-				reject(err);
-			});
-		});
+		doc.on('end', () => resolve(Buffer.concat(chunks)));
+		doc.on('error', (err) => reject(err));
 
 		// Add content to PDF
-		doc.fontSize(25).text(`Document: ${fileId}`, 100, 100);
+		doc.fontSize(25).text(fileMetadata.name || 'Sample Document', 100, 100);
 		doc.moveDown();
-		doc.fontSize(14).text('This is a dynamically generated PDF document.', 100, 150);
-		doc.fontSize(12).text('You can replace this with actual file storage logic.', 100, 180);
-
-		// Add more content
+		doc.fontSize(14).text('This is a sample document.', 100, 150);
+		doc.fontSize(12).text('The actual file content has not been uploaded yet.', 100, 180);
 		doc.moveDown();
-		doc.text(`Generated at: ${new Date().toLocaleString()}`, 100, 210);
-		doc.text(`File ID: ${fileId}`, 100, 230);
+		doc.text(`File ID: ${fileMetadata.id}`, 100, 220);
+		doc.text(`Generated at: ${new Date().toLocaleString()}`, 100, 240);
 
 		// Add a second page
 		doc.addPage();
 		doc.fontSize(20).text('Page 2', 100, 100);
-		doc.fontSize(12).text('This document has multiple pages for testing.', 100, 150);
-		doc.text('You can add comments by clicking anywhere on the pages.', 100, 170);
+		doc.fontSize(12).text('Upload a real file to see its actual content here.', 100, 150);
+		doc.text('This is just a placeholder document.', 100, 170);
 
-		// Add a third page
-		doc.addPage();
-		doc.fontSize(20).text('Page 3', 100, 100);
-		doc.fontSize(12).text('Third page content goes here.', 100, 150);
-
-		// Finalize the PDF
 		doc.end();
+	});
+}
 
-		// Wait for PDF generation to complete
-		const pdfBuffer = await pdfPromise;
+// Helper function to get content type based on file extension
+function getContentType(fileType) {
+	const contentTypes = {
+		// Documents
+		pdf: 'application/pdf',
+		doc: 'application/msword',
+		docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		
+		// Images
+		jpg: 'image/jpeg',
+		jpeg: 'image/jpeg',
+		png: 'image/png',
+		gif: 'image/gif',
+		webp: 'image/webp',
+		svg: 'image/svg+xml',
+		bmp: 'image/bmp',
+		
+		// Video
+		mp4: 'video/mp4',
+		webm: 'video/webm',
+		ogg: 'video/ogg',
+		
+		// Audio
+		mp3: 'audio/mpeg',
+		wav: 'audio/wav',
+		oga: 'audio/ogg',
+		
+		// Text
+		txt: 'text/plain',
+		md: 'text/markdown',
+		json: 'application/json',
+		csv: 'text/csv',
+		log: 'text/plain',
+		
+		// Archives
+		zip: 'application/zip',
+		rar: 'application/x-rar-compressed',
+		tar: 'application/x-tar',
+		gz: 'application/gzip'
+	};
 
-		console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
-
-		// Return the PDF
-		return new Response(pdfBuffer, {
-			status: 200,
-			headers: {
-				'Content-Type': 'application/pdf',
-				'Content-Disposition': `inline; filename="${fileId}"`,
-				'Content-Length': pdfBuffer.length.toString(),
-				'Cache-Control': 'no-cache'
-			}
-		});
-	} catch (err) {
-		console.error('File generation error:', err);
-		throw error(500, `Failed to generate file: ${err.message}`);
-	}
+	return contentTypes[fileType.toLowerCase()] || 'application/octet-stream';
 }
 
 // DELETE /files/[id] - Delete a file
@@ -133,13 +215,17 @@ export async function DELETE({ request, params }) {
 		return json({ error: 'Not authorized to delete this file' }, { status: 403 });
 	}
 
-	// Delete the file
+	// Delete the actual file from disk
+	const filePath = path.join(UPLOAD_DIR, fileId);
+	if (fs.existsSync(filePath)) {
+		fs.unlinkSync(filePath);
+		console.log('Deleted file from disk:', filePath);
+	}
+
+	// Delete the file metadata
 	filesStorage.delete(fileId);
 
-	// In production, you would also:
-	// 1. Delete the actual file from disk/cloud storage
-	// 2. Delete associated comments and metadata from database
-	// 3. Update folder statistics
+	console.log('File deleted successfully:', fileId);
 
 	return json({
 		success: true,

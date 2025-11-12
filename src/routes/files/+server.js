@@ -1,8 +1,16 @@
 import { json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import { filesStorage } from '$lib/server/storage.js';
+import fs from 'fs';
+import path from 'path';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+
+// Ensure upload directory exists
+if (!fs.existsSync(UPLOAD_DIR)) {
+	fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
 
 // Helper function to verify JWT
 function verifyToken(request) {
@@ -102,13 +110,16 @@ export async function POST({ request }) {
 			return json({ error: 'No file provided' }, { status: 400 });
 		}
 
-		// In production, you would:
-		// 1. Save the file to disk or cloud storage
-		// 2. Generate a unique file ID
-		// 3. Store metadata in database
-
+		// Generate unique file ID
 		const fileId = Date.now().toString();
 		const fileExtension = file.name.split('.').pop().toLowerCase();
+
+		// Save file to disk
+		const filePath = path.join(UPLOAD_DIR, fileId);
+		const arrayBuffer = await file.arrayBuffer();
+		const buffer = Buffer.from(arrayBuffer);
+		
+		fs.writeFileSync(filePath, buffer);
 
 		const newFile = {
 			id: fileId,
@@ -123,6 +134,8 @@ export async function POST({ request }) {
 		};
 
 		filesStorage.set(fileId, newFile);
+
+		console.log('File uploaded successfully:', fileId, file.name);
 
 		return json({ file: newFile }, { status: 201 });
 	} catch (error) {
