@@ -57,7 +57,7 @@ export async function GET({ request, params }) {
 
 		// Check if actual file exists on disk
 		const filePath = path.join(UPLOAD_DIR, fileId);
-		
+
 		if (fs.existsSync(filePath)) {
 			// Serve the actual file
 			const fileBuffer = fs.readFileSync(filePath);
@@ -94,7 +94,7 @@ export async function GET({ request, params }) {
 		if (fileMetadata.type === 'pdf') {
 			console.log('Generating sample PDF for:', fileId);
 			const pdfBuffer = await generateSamplePDF(fileMetadata);
-			
+
 			return new Response(pdfBuffer, {
 				status: 200,
 				headers: {
@@ -153,7 +153,7 @@ function getContentType(fileType) {
 		pdf: 'application/pdf',
 		doc: 'application/msword',
 		docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		
+
 		// Images
 		jpg: 'image/jpeg',
 		jpeg: 'image/jpeg',
@@ -162,24 +162,24 @@ function getContentType(fileType) {
 		webp: 'image/webp',
 		svg: 'image/svg+xml',
 		bmp: 'image/bmp',
-		
+
 		// Video
 		mp4: 'video/mp4',
 		webm: 'video/webm',
 		ogg: 'video/ogg',
-		
+
 		// Audio
 		mp3: 'audio/mpeg',
 		wav: 'audio/wav',
 		oga: 'audio/ogg',
-		
+
 		// Text
 		txt: 'text/plain',
 		md: 'text/markdown',
 		json: 'application/json',
 		csv: 'text/csv',
 		log: 'text/plain',
-		
+
 		// Archives
 		zip: 'application/zip',
 		rar: 'application/x-rar-compressed',

@@ -118,7 +118,7 @@ export async function POST({ request }) {
 		const filePath = path.join(UPLOAD_DIR, fileId);
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
-		
+
 		fs.writeFileSync(filePath, buffer);
 
 		const newFile = {
