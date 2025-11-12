@@ -110,7 +110,7 @@ export async function GET({ request, params }) {
 		if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(fileMetadata.type)) {
 			console.log('Generating sample image placeholder for:', fileId);
 			const svgContent = generateSampleImage(fileMetadata);
-			
+
 			return new Response(svgContent, {
 				status: 200,
 				headers: {
@@ -125,7 +125,7 @@ export async function GET({ request, params }) {
 		if (['txt', 'md', 'json', 'csv', 'log'].includes(fileMetadata.type)) {
 			console.log('Generating sample text for:', fileId);
 			const textContent = generateSampleText(fileMetadata);
-			
+
 			return new Response(textContent, {
 				status: 200,
 				headers: {

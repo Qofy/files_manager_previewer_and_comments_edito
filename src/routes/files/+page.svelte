@@ -966,37 +966,6 @@
 			</div>
 
 		</div>
-
-		<!-- Comment Sidebar - Always Visible -->
-		<aside class="comment-sidebar">
-			<header>Comments</header>
-			<div class="comments">
-				{#if sortedComments.length === 0}
-					<div class="no-comments">
-						<i class="fas fa-comments"></i>
-						<p>No comments yet</p>
-						<small>Select a file and click to add comments</small>
-					</div>
-				{:else}
-					{#each sortedComments as comment}
-						<div class="comment">
-							<strong>p.{comment.page}</strong> {comment.text}
-							<br/>
-							<small>{comment.user_id || 'anon'} · {new Date(comment.created_at).toLocaleString()}</small>
-						</div>
-					{/each}
-				{/if}
-			</div>
-			<div class="new-comment">
-				<textarea
-					bind:value={commentText}
-					placeholder={selectedFile ? "Add a comment… (click a spot in the file first)" : "Select a file to add comments"}
-					disabled={!selectedFile}
-				></textarea>
-				<button on:click={handleSendComment} disabled={!canSend || !selectedFile}>Send</button>
-			</div>
-		</aside>
-
 		<!-- Viewer - Always show container and toolbar -->
 		<div class="viewer-container">
 			<main class="viewer" bind:this={viewerEl}>
@@ -1038,6 +1007,36 @@
 				{/if}
 			</main>
 		</div>
+<!-- Comment Sidebar - Always Visible -->
+		<aside class="comment-sidebar">
+			<header>Comments</header>
+			<div class="comments">
+				{#if sortedComments.length === 0}
+					<div class="no-comments">
+						<i class="fas fa-comments"></i>
+						<p>No comments yet</p>
+						<small>Select a file and click to add comments</small>
+					</div>
+				{:else}
+					{#each sortedComments as comment}
+						<div class="comment">
+							<strong>p.{comment.page}</strong> {comment.text}
+							<br/>
+							<small>{comment.user_id || 'anon'} · {new Date(comment.created_at).toLocaleString()}</small>
+						</div>
+					{/each}
+				{/if}
+			</div>
+			<div class="new-comment">
+				<textarea
+					bind:value={commentText}
+					placeholder={selectedFile ? "Add a comment… (click a spot in the file first)" : "Select a file to add comments"}
+					disabled={!selectedFile}
+				></textarea>
+				<button on:click={handleSendComment} disabled={!canSend || !selectedFile}>Send</button>
+			</div>
+		</aside>
+
   </main>
 </div>
 
