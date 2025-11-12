@@ -5,15 +5,9 @@
 <aside class="sidebar">
 		<div class="logo"></div>
 		<ul class="nav">
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-			<li on:click={() => goto('/dashboard')}><i class="fas fa-chart-line"></i></li>
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-			<li on:click={() => goto('/invoices')}><i class="fas fa-file-invoice"></i></li>
-			<li class="active"><i class="fas fa-folder"></i></li>
+			<li on:click={() => goto('/dashboard')} role="button" tabindex="0"><i class="fas fa-chart-line"></i></li>
+			<li class="active"><i class="fas fa-file-invoice"></i></li>
+			<li on:click={() => goto('/files')} role="button" tabindex="0"><i class="fas fa-folder"></i></li>
 			<li><i class="fas fa-user-friends"></i></li>
 			<li><i class="fas fa-user-circle"></i></li>
 			<li><i class="fas fa-cog"></i></li>

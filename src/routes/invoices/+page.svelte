@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
+	import Aside from '$lib/pages/Aside.svelte';
 
 	let clientsMap = {};
 	let currentStatus = 'Unpaid';
@@ -114,17 +115,7 @@
 </svelte:head>
 
 <div class="app-container">
-	<aside class="sidebar">
-		<div class="logo"></div>
-		<ul class="nav">
-			<li on:click={() => goto('/dashboard')} role="button" tabindex="0"><i class="fas fa-chart-line"></i></li>
-			<li class="active"><i class="fas fa-file-invoice"></i></li>
-			<li on:click={() => goto('/files')} role="button" tabindex="0"><i class="fas fa-folder"></i></li>
-			<li><i class="fas fa-user-friends"></i></li>
-			<li><i class="fas fa-user-circle"></i></li>
-			<li><i class="fas fa-cog"></i></li>
-		</ul>
-	</aside>
+	<Aside/>
 	<main class="main-content">
 		<div class="top-bar">
 			<div class="search-container">
