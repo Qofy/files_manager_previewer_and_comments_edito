@@ -53,7 +53,7 @@ export async function GET({ request, url }) {
 
 	// Filter files by owner
 	let files = Array.from(filesStorage.values()).filter((file) => file.owner === username);
-	
+
 	console.log('Total files for user:', files.length);
 
 	// Apply folder filter only if folder_id parameter is explicitly provided
