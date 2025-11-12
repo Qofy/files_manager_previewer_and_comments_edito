@@ -93,3 +93,64 @@ filesStorage.set('5', {
 	uploaded_at: '2025-01-22T10:30:00Z',
 	updated_at: '2025-01-22T10:30:00Z'
 });
+
+// Additional sample PDF files for testing
+filesStorage.set('sample-invoice-2025.pdf', {
+	id: 'sample-invoice-2025.pdf',
+	name: 'Sample_Invoice_2025.pdf',
+	type: 'pdf',
+	category: 'documents',
+	size: 245000,
+	folder_id: '1',
+	owner: 'admin',
+	uploaded_at: '2025-01-15T10:30:00Z',
+	updated_at: '2025-01-15T10:30:00Z'
+});
+
+filesStorage.set('project-proposal.pdf', {
+	id: 'project-proposal.pdf',
+	name: 'Project_Proposal.pdf',
+	type: 'pdf',
+	category: 'documents',
+	size: 1200000,
+	folder_id: '1',
+	owner: 'admin',
+	uploaded_at: '2025-02-01T14:20:00Z',
+	updated_at: '2025-02-01T14:20:00Z'
+});
+
+filesStorage.set('contract-template.pdf', {
+	id: 'contract-template.pdf',
+	name: 'Contract_Template.pdf',
+	type: 'pdf',
+	category: 'documents',
+	size: 180000,
+	folder_id: '1',
+	owner: 'admin',
+	uploaded_at: '2025-02-10T09:15:00Z',
+	updated_at: '2025-02-10T09:15:00Z'
+});
+
+filesStorage.set('annual-report-2024.pdf', {
+	id: 'annual-report-2024.pdf',
+	name: 'Annual_Report_2024.pdf',
+	type: 'pdf',
+	category: 'documents',
+	size: 3500000,
+	folder_id: '1',
+	owner: 'admin',
+	uploaded_at: '2025-01-05T16:45:00Z',
+	updated_at: '2025-01-05T16:45:00Z'
+});
+
+filesStorage.set('meeting-notes.pdf', {
+	id: 'meeting-notes.pdf',
+	name: 'Meeting_Notes_Jan.pdf',
+	type: 'pdf',
+	category: 'documents',
+	size: 92000,
+	folder_id: '1',
+	owner: 'admin',
+	uploaded_at: '2025-01-25T11:00:00Z',
+	updated_at: '2025-01-25T11:00:00Z'
+});

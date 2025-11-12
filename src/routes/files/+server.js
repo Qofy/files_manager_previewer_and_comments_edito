@@ -49,17 +49,25 @@ export async function GET({ request, url }) {
 	const category = url.searchParams.get('category'); // Filter by category
 	const search = url.searchParams.get('search'); // Search by name
 
-	// Filter files by owner and optionally by folder_id and category
-	let files = Array.from(filesStorage.values()).filter((file) => file.owner === username);
+	console.log('Files API called - folder_id:', folder_id, 'username:', username);
 
-	// Apply folder filter
-	if (folder_id !== null && folder_id !== undefined) {
+	// Filter files by owner
+	let files = Array.from(filesStorage.values()).filter((file) => file.owner === username);
+	
+	console.log('Total files for user:', files.length);
+
+	// Apply folder filter only if folder_id parameter is explicitly provided
+	if (folder_id !== null) {
 		if (folder_id === 'null' || folder_id === '') {
+			// Show only files not in any folder
 			files = files.filter((file) => file.folder_id === null || file.folder_id === undefined);
 		} else {
+			// Show files in specific folder
 			files = files.filter((file) => file.folder_id === folder_id);
 		}
+		console.log('Files after folder filter:', files.length);
 	}
+	// If folder_id is null (not provided), show ALL files regardless of folder
 
 	// Apply category filter
 	if (category && category !== 'all') {

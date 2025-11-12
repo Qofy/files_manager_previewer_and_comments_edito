@@ -12,6 +12,7 @@
   let searchQuery = '';
   let selected = new Set();
   let dragOverFolder = null;
+  let mounted = false;
   
   const _fileListCache = new Map();
 
@@ -21,6 +22,7 @@
       return;
     }
     
+    mounted = true;
     await loadFolders();
     await loadFiles();
   });
@@ -301,8 +303,8 @@
     return ['pdf','png','jpg','jpeg','gif','webp','mp4','webm','mp3','wav','txt','md','json'].includes(type.toLowerCase());
   }
 
-  // Watch for filter/search changes
-  $: if (filterType || searchQuery !== undefined) {
+  // Watch for filter/search changes (only after mount)
+  $: if (mounted && (filterType || searchQuery !== undefined)) {
     loadFiles();
   }
 </script>
