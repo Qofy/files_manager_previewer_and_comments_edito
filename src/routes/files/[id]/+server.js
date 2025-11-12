@@ -1,8 +1,33 @@
-import { error } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import PDFDocument from 'pdfkit';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Import files storage
+let filesStorage;
+try {
+  const filesModule = await import('../+server.js');
+  filesStorage = filesModule.filesStorage;
+} catch {
+  filesStorage = new Map();
+}
+
+// Helper function to verify JWT
+function verifyToken(request) {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded.username;
+  } catch {
+    return null;
+  }
+}
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ request, params }) {
@@ -89,4 +114,44 @@ export async function GET({ request, params }) {
 		console.error('File generation error:', err);
 		throw error(500, `Failed to generate file: ${err.message}`);
 	}
+}
+
+// DELETE /files/[id] - Delete a file
+export async function DELETE({ request, params }) {
+  const username = verifyToken(request);
+  if (!username) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const fileId = params.id;
+
+  if (!fileId) {
+    return json({ error: 'File ID is required' }, { status: 400 });
+  }
+
+  // Get the file
+  const file = filesStorage.get(fileId);
+
+  if (!file) {
+    return json({ error: 'File not found' }, { status: 404 });
+  }
+
+  // Check ownership
+  if (file.owner !== username) {
+    return json({ error: 'Not authorized to delete this file' }, { status: 403 });
+  }
+
+  // Delete the file
+  filesStorage.delete(fileId);
+
+  // In production, you would also:
+  // 1. Delete the actual file from disk/cloud storage
+  // 2. Delete associated comments and metadata from database
+  // 3. Update folder statistics
+
+  return json({
+    success: true,
+    message: 'File deleted successfully',
+    file_id: fileId
+  });
 }
