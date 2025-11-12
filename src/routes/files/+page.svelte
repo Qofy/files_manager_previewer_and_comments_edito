@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import { Auth } from '$lib/utils/auth.js';
   import { browser } from '$app/environment';
@@ -196,27 +196,54 @@
 
   // View file
   async function handleView(file) {
+    console.log('handleView called with file:', file);
     selectedFile = file;
     fileExt = file.type.toLowerCase();
+    console.log('File type:', fileExt);
     
-    if (!browser) return;
+    if (!browser) {
+      console.log('Not in browser environment');
+      return;
+    }
+
+    // Wait for Svelte to update the DOM
+    console.log('Waiting for DOM update...');
+    await tick();
+    console.log('DOM updated, pagesEl:', pagesEl);
 
     // Wait for PDF.js to load if needed
     if (fileExt === 'pdf') {
+      console.log('Loading PDF viewer for file:', file.id);
+      console.log('Checking for PDF.js library...');
       let attempts = 0;
       while (!window.pdfjsLib && attempts < 50) {
+        console.log('Waiting for PDF.js... attempt', attempts);
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
       }
+      
+      if (!window.pdfjsLib) {
+        console.error('PDF.js failed to load after', attempts, 'attempts');
+        alert('PDF.js library failed to load. Please refresh the page.');
+        return;
+      }
+      
+      console.log('PDF.js library found, initializing viewer...');
       await initPdfViewer(file.id);
     } else if (['png','jpg','jpeg','gif','webp','bmp','svg'].includes(fileExt)) {
+      console.log('Loading image viewer for file:', file.id);
       initImageViewer(file.id);
     } else if (['mp4','webm','ogg'].includes(fileExt)) {
+      console.log('Loading video viewer for file:', file.id);
       initVideoViewer(file.id);
     } else if (['mp3','wav','ogg'].includes(fileExt)) {
+      console.log('Loading audio viewer for file:', file.id);
       initAudioViewer(file.id);
     } else if (['txt','md','json','csv','log'].includes(fileExt)) {
+      console.log('Loading text viewer for file:', file.id);
       initTextViewer(file.id);
+    } else {
+      console.log('Unknown file type:', fileExt);
     }
   }
   
@@ -360,24 +387,34 @@
   
   // PDF Viewer
   async function initPdfViewer(fileId) {
+    console.log('initPdfViewer called with fileId:', fileId);
+    
     if (!window.pdfjsLib) {
+      console.error('PDF.js library not loaded');
       alert('Failed to load PDF.js library');
       return;
     }
 
+    console.log('PDF.js library loaded successfully');
     const pdfjsLib = window.pdfjsLib;
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const token = Auth.token();
+    console.log('Auth token:', token ? 'present' : 'missing');
 
     try {
+      const pdfUrl = `/files/${encodeURIComponent(fileId)}`;
+      console.log('Loading PDF from:', pdfUrl);
+      
       const loadingTask = pdfjsLib.getDocument({
-        url: `/files/${encodeURIComponent(fileId)}`,
+        url: pdfUrl,
         httpHeaders: token ? { Authorization: 'Bearer ' + token } : {},
       });
       
+      console.log('Waiting for PDF to load...');
       pdf = await loadingTask.promise;
+      console.log('PDF loaded successfully! Pages:', pdf.numPages);
       
       // Get page dimensions for display
       const page = await pdf.getPage(1);
@@ -385,14 +422,21 @@
       const wCm = (viewport.width * 2.54) / 96;
       const hCm = (viewport.height * 2.54) / 96;
       dimLabel = `${wCm.toFixed(1)} × ${hCm.toFixed(1)} cm`;
+      console.log('Page dimensions:', dimLabel);
       
       // Fit to width
       const viewerWidth = viewerEl?.clientWidth || 800;
       const scale = Math.min(2.5, Math.max(0.5, (viewerWidth - 32) / viewport.width));
       zoomLevel = scale;
+      console.log('Calculated zoom level:', zoomLevel);
       
+      console.log('Rendering all pages...');
       await renderAllPages();
+      console.log('Pages rendered successfully');
+      
+      console.log('Loading comments...');
       await loadComments();
+      console.log('Comments loaded');
     } catch (error) {
       console.error('Error loading PDF:', error);
       alert('Failed to load PDF: ' + error.message);
@@ -444,19 +488,26 @@
   }
 
   async function renderAllPages() {
-    if (!pdf || !pagesEl) return;
+    console.log('renderAllPages called');
+    if (!pdf || !pagesEl) {
+      console.log('Cannot render: pdf=', pdf, 'pagesEl=', pagesEl);
+      return;
+    }
     
+    console.log('Rendering', pdf.numPages, 'pages at zoom', zoomLevel);
     const jobs = [];
     for (let p = 1; p <= pdf.numPages; p++) {
       jobs.push(renderPage(p, zoomLevel));
     }
     await Promise.all(jobs);
+    console.log('All pages rendered');
     renderCommentPins();
   }
 
   // Image Viewer
   function initImageViewer(fileId) {
     const url = `/files/${encodeURIComponent(fileId)}`;
+    console.log('Loading image from:', url);
     const img = new Image();
     img.style.display = 'block';
     img.style.transformOrigin = 'top left';
@@ -471,12 +522,24 @@
       const w = img.naturalWidth;
       const h = img.naturalHeight;
       dimLabel = `${w} × ${h} px`;
+      console.log('Image loaded successfully:', w, 'x', h);
       
       // Fit to width
       const vw = viewerEl?.clientWidth || 800;
       const scale = Math.min(4, Math.max(0.2, (vw - 32) / w));
       zoomLevel = scale;
       img.style.transform = `scale(${scale})`;
+    };
+    
+    img.onerror = (e) => {
+      console.error('Failed to load image:', e);
+      if (pagesEl) {
+        pagesEl.innerHTML = `<div style="padding: 40px; text-align: center; color: #999;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+          <p>Failed to load image</p>
+          <small>The file may be corrupted or not found</small>
+        </div>`;
+      }
     };
     
     img.src = url;
@@ -867,32 +930,31 @@
 									class:selected={selected.has(file.id)}
 									draggable="true"
 									on:dragstart={(e) => handleDragStart(e, file)}
-									 on:click={() => handleView(file)}
 								>
-									<td>
+									<td on:click|stopPropagation>
 										<input 
 											type="checkbox" 
 											checked={selected.has(file.id)}
 											on:change={() => toggleSelection(file.id)}
 										/>
 									</td>
-									<td class="file-name">
+									<td class="file-name" on:click={() => handleView(file)}>
 										<i class={getFileIcon(file.category)}></i>
 										<span>{file.name}</span>
 									</td>
-									<td>{formatBytes(file.size)}</td>
-									<td>{file.type.toUpperCase()}</td>
-									<td>{new Date(file.uploaded_at).toLocaleDateString()}</td>
-									<td style="text-align: right">
+									<td on:click={() => handleView(file)}>{formatBytes(file.size)}</td>
+									<td on:click={() => handleView(file)}>{file.type.toUpperCase()}</td>
+									<td on:click={() => handleView(file)}>{new Date(file.uploaded_at).toLocaleDateString()}</td>
+									<td style="text-align: right" on:click|stopPropagation>
 										{#if canPreview(file.type)}
-											<button class="icon-btn" on:click={() => handleView(file)} title="View">
+											<button class="icon-btn" on:click|stopPropagation={() => handleView(file)} title="View">
 												<i class="fas fa-eye"></i>
 											</button>
 										{/if}
-										<button class="icon-btn" on:click={() => window.open('/files/' + file.id, '_blank')} title="Download">
+										<button class="icon-btn" on:click|stopPropagation={() => window.open('/files/' + file.id, '_blank')} title="Download">
 											<i class="fas fa-download"></i>
 										</button>
-										<button class="icon-btn" on:click={() => handleDelete(file.id, file.name)} title="Delete">
+										<button class="icon-btn" on:click|stopPropagation={(e) => { e.preventDefault(); handleDelete(file.id, file.name); }} title="Delete">
 											<i class="fas fa-trash"></i>
 										</button>
 									</td>

@@ -106,7 +106,37 @@ export async function GET({ request, params }) {
 			});
 		}
 
-		// For non-PDF files without content
+		// Fallback: Generate sample image
+		if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(fileMetadata.type)) {
+			console.log('Generating sample image placeholder for:', fileId);
+			const svgContent = generateSampleImage(fileMetadata);
+			
+			return new Response(svgContent, {
+				status: 200,
+				headers: {
+					'Content-Type': 'image/svg+xml',
+					'Content-Disposition': `inline; filename="${fileMetadata.name}"`,
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		// Fallback: Generate sample text
+		if (['txt', 'md', 'json', 'csv', 'log'].includes(fileMetadata.type)) {
+			console.log('Generating sample text for:', fileId);
+			const textContent = generateSampleText(fileMetadata);
+			
+			return new Response(textContent, {
+				status: 200,
+				headers: {
+					'Content-Type': 'text/plain',
+					'Content-Disposition': `inline; filename="${fileMetadata.name}"`,
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		// For other file types without content
 		throw error(404, 'File content not found. Please upload the file again.');
 	} catch (err) {
 		console.error('File serving error:', err);
@@ -144,6 +174,40 @@ async function generateSamplePDF(fileMetadata) {
 
 		doc.end();
 	});
+}
+
+// Helper function to generate a sample image placeholder
+function generateSampleImage(fileMetadata) {
+	return `<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+		<rect width="100%" height="100%" fill="#f0f0f0"/>
+		<text x="50%" y="45%" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#666">
+			${fileMetadata.name}
+		</text>
+		<text x="50%" y="55%" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#999">
+			Sample ${fileMetadata.type.toUpperCase()} Placeholder
+		</text>
+		<text x="50%" y="65%" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#aaa">
+			Upload a real file to see actual content
+		</text>
+	</svg>`;
+}
+
+// Helper function to generate sample text content
+function generateSampleText(fileMetadata) {
+	return `${fileMetadata.name}
+==========================================
+
+This is a sample ${fileMetadata.type.toUpperCase()} file placeholder.
+
+File ID: ${fileMetadata.id}
+Generated at: ${new Date().toLocaleString()}
+
+The actual file content has not been uploaded yet.
+Upload a real file to see its actual content here.
+
+==========================================
+End of sample file
+`;
 }
 
 // Helper function to get content type based on file extension
