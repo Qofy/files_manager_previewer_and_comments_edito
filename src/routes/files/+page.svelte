@@ -1009,7 +1009,12 @@
 		</div>
 <!-- Comment Sidebar - Always Visible -->
 		<aside class="comment-sidebar">
-			<header>Comments</header>
+			<header>
+				<h3>Comments</h3>
+				{#if sortedComments.length > 0}
+					<span class="comment-count">{sortedComments.length} {sortedComments.length === 1 ? 'comment' : 'comments'}</span>
+				{/if}
+			</header>
 			<div class="comments">
 				{#if sortedComments.length === 0}
 					<div class="no-comments">
@@ -1020,9 +1025,26 @@
 				{:else}
 					{#each sortedComments as comment}
 						<div class="comment">
-							<strong>p.{comment.page}</strong> {comment.text}
-							<br/>
-							<small>{comment.user_id || 'anon'} · {new Date(comment.created_at).toLocaleString()}</small>
+							<div class="comment-header">
+								<div class="comment-avatar">
+									{(comment.user_id || 'A')[0].toUpperCase()}
+								</div>
+								<div class="comment-meta">
+									<strong class="comment-user">{comment.user_id || 'Anonymous'}</strong>
+									<span class="comment-time">{new Date(comment.created_at).toLocaleString('en-US', { 
+										month: 'short', 
+										day: 'numeric', 
+										year: 'numeric',
+										hour: 'numeric', 
+										minute: '2-digit',
+										hour12: true 
+									})}</span>
+								</div>
+								<span class="comment-page">p.{comment.page}</span>
+							</div>
+							<div class="comment-text">
+								{comment.text}
+							</div>
 						</div>
 					{/each}
 				{/if}
@@ -1384,9 +1406,26 @@
   .comment-sidebar header {
     padding: 12px 16px;
     border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .comment-sidebar header h3 {
+    margin: 0;
+    font-size: 16px;
     font-weight: 600;
     color: #0c5489;
-    flex-shrink: 0;
+  }
+  
+  .comment-count {
+    font-size: 12px;
+    color: #666;
+    background: #f0f6fa;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
   }
   
   .comments {
@@ -1423,12 +1462,72 @@
   }
   
   .comment {
-    padding: 10px 12px;
+    padding: 12px;
     border-bottom: 1px solid #f2f2f2;
   }
   
-  .comment small {
-    color: #777;
+  .comment:hover {
+    background: #f9f9f9;
+  }
+  
+  .comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0c5489;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  
+  .comment-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  
+  .comment-user {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .comment-time {
+    font-size: 11px;
+    color: #999;
+  }
+  
+  .comment-page {
+    background: #e6f3ff;
+    color: #0c5489;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  
+  .comment-text {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    word-wrap: break-word;
   }
   
   .new-comment {
