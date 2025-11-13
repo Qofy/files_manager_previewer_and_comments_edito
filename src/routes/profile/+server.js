@@ -14,8 +14,10 @@ function verifyToken(request) {
 	const token = authHeader.substring(7);
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET);
+		// Return username - prioritize username field, fallback to userId for legacy tokens
 		return decoded.username || decoded.userId;
-	} catch {
+	} catch (err) {
+		console.error('Token verification failed:', err.message);
 		return null;
 	}
 }
@@ -29,6 +31,8 @@ export async function GET({ request }) {
 
 	const user = users.get(username);
 	if (!user) {
+		console.error('User not found in storage:', username);
+		console.log('Available users:', Array.from(users.keys()));
 		return json({ error: 'User not found' }, { status: 404 });
 	}
 

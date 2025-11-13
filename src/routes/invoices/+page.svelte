@@ -33,6 +33,11 @@
 			profileImage = profile.profileImage;
 		} catch (err) {
 			console.error('Failed to load profile:', err);
+			// If profile fails (user not found), clear auth and redirect to login
+			if (err.error === 'User not found' || err.error === 'Unauthorized') {
+				Auth.clear();
+				goto('/login');
+			}
 		}
 	}
 

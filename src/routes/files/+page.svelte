@@ -53,6 +53,11 @@
         const profile = await res.json();
         profileImage = profile.profileImage;
         currentUsername = profile.username;
+      } else if (res.status === 401 || res.status === 404) {
+        // Unauthorized or user not found - clear auth and redirect
+        Auth.clear();
+        goto('/login');
+        return;
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
