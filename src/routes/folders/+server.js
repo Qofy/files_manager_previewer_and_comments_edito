@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { json } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import { foldersStorage } from '$lib/server/storage.js';

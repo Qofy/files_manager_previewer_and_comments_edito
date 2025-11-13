@@ -6,7 +6,7 @@
 
 <aside class="sidebar">
 		<div class="logo">
-			<img src={logo} alt="logo" class="logo-img">
+			<!-- <img src={logo} alt="logo" class="logo-img"> -->
 		</div>
 		<ul class="nav">
 			
@@ -44,7 +44,7 @@
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
-		/* background: #0c5489; */
+		background: #0c5489; 
 		margin-bottom: 20px;
 	}
 	.sidebar ul {
