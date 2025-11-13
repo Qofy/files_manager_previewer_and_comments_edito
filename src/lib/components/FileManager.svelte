@@ -207,9 +207,11 @@
                 on:change={() => toggleSelection(file.id)}
               />
             </td>
-            <td class="file-name" on:click={() => handleView(file)}>
-              <i class={getFileIcon(file.category)}></i>
-              <span>{file.name}</span>
+            <td on:click={() => handleView(file)}>
+              <div class="file-name">
+                <i class={getFileIcon(file.category)}></i>
+                <span>{file.name}</span>
+              </div>
             </td>
             <td on:click={() => handleView(file)}>{formatBytes(file.size)}</td>
             <td on:click={() => handleView(file)}>{file.type.toUpperCase()}</td>
@@ -418,6 +420,7 @@
     border-bottom: 1px solid #f0f0f0;
     font-size: 14px;
     white-space: nowrap;
+    padding: 8px 4px;
   }
   
   .file-table tbody td:last-child {
