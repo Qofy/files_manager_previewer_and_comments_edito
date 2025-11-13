@@ -56,6 +56,7 @@ export async function GET({ request, url }) {
 	const folder_id = url.searchParams.get('folder_id'); // Filter by folder
 	const category = url.searchParams.get('category'); // Filter by category
 	const search = url.searchParams.get('search'); // Search by name
+	const tag = url.searchParams.get('tag'); // Filter by tag
 
 	console.log('Files API called - folder_id:', folder_id, 'username:', username);
 
@@ -86,6 +87,11 @@ export async function GET({ request, url }) {
 			// Filter by category for other types
 			files = files.filter((file) => file.category === category);
 		}
+	}
+
+	// Apply tag filter
+	if (tag && tag !== 'all') {
+		files = files.filter((file) => file.tags && file.tags.includes(tag));
 	}
 
 	// Apply search filter
@@ -135,6 +141,7 @@ export async function POST({ request }) {
 			size: file.size,
 			folder_id: folder_id,
 			owner: username,
+			tags: [],
 			uploaded_at: new Date().toISOString(),
 			updated_at: new Date().toISOString()
 		};

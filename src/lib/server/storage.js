@@ -2,6 +2,16 @@
 export const foldersStorage = new Map();
 export const filesStorage = new Map();
 
+// Predefined tags/labels
+export const availableTags = [
+	{ id: 'work', name: 'Work', color: '#1967d2' },
+	{ id: 'personal', name: 'Personal', color: '#188038' },
+	{ id: 'important', name: 'Important', color: '#d93025' },
+	{ id: 'shared', name: 'Shared', color: '#f9ab00' },
+	{ id: 'archived', name: 'Archived', color: '#5f6368' },
+	{ id: 'draft', name: 'Draft', color: '#e37400' }
+];
+
 // Initialize with default folders
 foldersStorage.set('1', {
 	id: '1',
@@ -9,6 +19,7 @@ foldersStorage.set('1', {
 	path: '/Documents',
 	parent_id: null,
 	owner: 'admin',
+	tags: ['work'],
 	created_at: new Date().toISOString(),
 	updated_at: new Date().toISOString()
 });
@@ -19,6 +30,7 @@ foldersStorage.set('2', {
 	path: '/Images',
 	parent_id: null,
 	owner: 'admin',
+	tags: ['work', 'shared'],
 	created_at: new Date().toISOString(),
 	updated_at: new Date().toISOString()
 });
@@ -29,6 +41,7 @@ foldersStorage.set('3', {
 	path: '/Projects',
 	parent_id: null,
 	owner: 'admin',
+	tags: ['important'],
 	created_at: new Date().toISOString(),
 	updated_at: new Date().toISOString()
 });
@@ -46,16 +59,70 @@ filesStorage.set('1', {
 	updated_at: '2025-01-15T10:30:00Z'
 });
 
-filesStorage.set('2', {
-	id: '2',
-	name: 'Project_Proposal.pdf',
-	type: 'pdf',
-	category: 'documents',
-	size: 1258291,
+// Initialize with sample files
+filesStorage.set('1', {
+	id: '1',
+	name: 'Project Proposal.pdf',
+	type: 'application/pdf',
+	category: 'document',
+	size: 1024000,
 	folder_id: '1',
 	owner: 'admin',
-	uploaded_at: '2025-02-01T14:20:00Z',
-	updated_at: '2025-02-01T14:20:00Z'
+	tags: ['work', 'important'],
+	uploaded_at: new Date().toISOString(),
+	updated_at: new Date().toISOString()
+});
+
+filesStorage.set('2', {
+	id: '2',
+	name: 'Team Photo.jpg',
+	type: 'image/jpeg',
+	category: 'image',
+	size: 512000,
+	folder_id: '2',
+	owner: 'admin',
+	tags: ['personal', 'shared'],
+	uploaded_at: new Date().toISOString(),
+	updated_at: new Date().toISOString()
+});
+
+filesStorage.set('3', {
+	id: '3',
+	name: 'App Mockup.png',
+	type: 'image/png',
+	category: 'image',
+	size: 256000,
+	folder_id: '3',
+	owner: 'admin',
+	tags: ['work', 'draft'],
+	uploaded_at: new Date().toISOString(),
+	updated_at: new Date().toISOString()
+});
+
+filesStorage.set('4', {
+	id: '4',
+	name: 'Meeting Notes.txt',
+	type: 'text/plain',
+	category: 'document',
+	size: 2048,
+	folder_id: '1',
+	owner: 'admin',
+	tags: ['work'],
+	uploaded_at: new Date().toISOString(),
+	updated_at: new Date().toISOString()
+});
+
+filesStorage.set('5', {
+	id: '5',
+	name: 'Invoice Template.xlsx',
+	type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	category: 'spreadsheet',
+	size: 102400,
+	folder_id: '1',
+	owner: 'admin',
+	tags: ['work', 'important'],
+	uploaded_at: new Date().toISOString(),
+	updated_at: new Date().toISOString()
 });
 
 filesStorage.set('3', {

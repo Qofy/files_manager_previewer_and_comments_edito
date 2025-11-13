@@ -5,6 +5,7 @@ A full-featured file management system with PDF/image preview capabilities, comm
 ## 🚀 Features
 
 - **File Management**: Upload, organize, and manage files in folders
+- **Tag/Label System**: Google Drive-style tags for organizing files and folders with color coding
 - **Multi-format Preview**: View PDFs, images, videos, audio files, and text documents
 - **Commenting System**: Add location-based comments on PDFs with user avatars and timestamps
 - **User Authentication**: JWT-based authentication with profile image support
@@ -20,11 +21,14 @@ A full-featured file management system with PDF/image preview capabilities, comm
 │   ├── lib/                        # Shared library code
 │   │   ├── assets/                 # Static assets (images, icons)
 │   │   ├── components/             # Reusable Svelte components
+│   │   │   ├── ProfileMenu.svelte  # User profile menu with image upload
+│   │   │   ├── TagPill.svelte      # Tag display component
+│   │   │   └── TagSelector.svelte  # Tag selection dropdown
 │   │   ├── pages/                  # Page components
 │   │   │   ├── Aside.svelte        # Sidebar navigation component
 │   │   │   └── DashboardMain.svelte # Dashboard main content
 │   │   ├── server/                 # Server-side code
-│   │   │   ├── storage.js          # In-memory data storage (files/folders)
+│   │   │   ├── storage.js          # In-memory data storage (files/folders/tags)
 │   │   │   └── users.js            # User data storage
 │   │   └── utils/                  # Utility functions
 │   │       ├── api.js              # API client wrapper
@@ -43,12 +47,15 @@ A full-featured file management system with PDF/image preview capabilities, comm
 │       │   └── summary/            # Dashboard analytics endpoint
 │       ├── files/                  # File management
 │       │   ├── [id]/               # File operations (get, delete)
+│       │   │   ├── tags/           # Add/remove tags from files
 │       │   │   └── +page.svelte    # File viewer page (legacy)
-│       │   ├── +page.svelte        # Main file manager UI
-│       │   └── +server.js          # File upload/list/filter
+│       │   ├── +page.svelte        # Main file manager UI with tags
+│       │   └── +server.js          # File upload/list/filter (supports tag filtering)
 │       ├── folders/                # Folder management
+│       │   ├── [id]/               # Folder operations
+│       │   │   └── tags/           # Add/remove tags from folders
 │       │   ├── summary/            # Folder statistics
-│       │   └── +server.js          # Create/list folders
+│       │   └── +server.js          # Create/list folders (supports tag filtering)
 │       ├── health/                 # Health check endpoint
 │       ├── invoices/               # Invoice management
 │       │   ├── [id]/               # Invoice operations
@@ -66,8 +73,10 @@ A full-featured file management system with PDF/image preview capabilities, comm
 │       ├── profiles/               # Business profiles (for invoices)
 │       │   ├── [id]/               # Get specific business profile
 │       │   └── +server.js          # List/create business profiles
-│       └── register/               # User registration
-│           └── +server.js          # Registration endpoint
+│       ├── register/               # User registration
+│       │   └── +server.js          # Registration endpoint
+│       └── tags/                   # Tag management
+│           └── +server.js          # Get available tags
 ├── static/                         # Static files served directly
 │   └── robots.txt                  # SEO robots configuration
 ├── uploads/                        # User-uploaded files storage
@@ -115,13 +124,20 @@ Files served directly without processing (robots.txt, favicon, etc.)
 - `POST /register` - Register new user account
 
 ### Files & Folders
-- `GET /files` - List files (with filters: category, folder, search)
+- `GET /files` - List files (with filters: category, folder, search, tag)
 - `POST /files` - Upload file
 - `GET /files/[id]` - Get file content
 - `DELETE /files/[id]` - Delete file
-- `GET /folders` - List folders
+- `POST /files/[id]/tags` - Add tags to a file
+- `DELETE /files/[id]/tags?tag=<tagId>` - Remove tag from a file
+- `GET /folders` - List folders (with filter: tag)
 - `POST /folders` - Create folder
+- `POST /folders/[id]/tags` - Add tags to a folder
+- `DELETE /folders/[id]/tags?tag=<tagId>` - Remove tag from a folder
 - `GET /folders/summary` - Folder statistics
+
+### Tags
+- `GET /tags` - Get available tags/labels
 
 ### Comments
 - `GET /pdf/[id]/comments` - Get comments for a file
@@ -161,11 +177,24 @@ Files served directly without processing (robots.txt, favicon, etc.)
 
 ## 🎨 Key Features Implementation
 
+### Tag/Label System (Google Drive-style)
+- **Predefined Tags**: 6 color-coded tags (Work, Personal, Important, Shared, Archived, Draft)
+- **Tag Components**:
+  - `TagPill.svelte`: Displays tags with colors
+  - `TagSelector.svelte`: Dropdown for adding/removing tags
+- **Filtering**: Filter files and folders by tag
+- **Tag Operations**:
+  - Add multiple tags to files/folders via `POST /files/[id]/tags` or `POST /folders/[id]/tags`
+  - Remove tags via `DELETE /files/[id]/tags?tag=<tagId>`
+- **Color Coding**: Each tag has a unique color for visual organization
+- **Storage**: Tags stored as arrays in file/folder metadata
+
 ### File Upload & Storage
 Files are uploaded via `POST /files` and stored in the `uploads/` directory with metadata in memory (Map structure). Each file has:
 - ID (timestamp-based)
 - Name, type, category
 - Size, folder association
+- Tags array for organization
 - Upload date and owner
 
 ### PDF Viewing with Comments

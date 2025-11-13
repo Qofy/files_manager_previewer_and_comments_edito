@@ -29,9 +29,10 @@ export async function GET({ request, url }) {
 
 	// Get query parameters
 	const parent_id = url.searchParams.get('parent_id'); // Filter by parent folder
+	const tag = url.searchParams.get('tag'); // Filter by tag
 
 	// Filter folders by owner and optionally by parent_id
-	const folders = Array.from(foldersStorage.values())
+	let folders = Array.from(foldersStorage.values())
 		.filter((folder) => folder.owner === username)
 		.filter((folder) => {
 			if (parent_id === null) return true;
@@ -39,8 +40,14 @@ export async function GET({ request, url }) {
 				return folder.parent_id === null;
 			}
 			return folder.parent_id === parent_id;
-		})
-		.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+		});
+
+	// Apply tag filter
+	if (tag && tag !== 'all') {
+		folders = folders.filter((folder) => folder.tags && folder.tags.includes(tag));
+	}
+
+	folders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
 	return json({ folders });
 }
@@ -95,6 +102,7 @@ export async function POST({ request }) {
 		path,
 		parent_id,
 		owner: username,
+		tags: [],
 		created_at: new Date().toISOString(),
 		updated_at: new Date().toISOString()
 	};

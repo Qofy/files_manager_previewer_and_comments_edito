@@ -3,7 +3,7 @@ import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
-	import { User, Camera, Trash2, LogOut } from "lucide-svelte";
+	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 
   let rangeMonths = 12;
 	let runwayInfo = 'Loading...';
@@ -13,7 +13,6 @@ import { onMount } from 'svelte';
 	let spendingChartInstance = null;
 	let showProfileMenu = false;
 	let profileImage = null;
-	let fileInput;
 
 	onMount(async () => {
 		if (!Auth.token()) {
@@ -207,76 +206,42 @@ import { onMount } from 'svelte';
 		loadDashboard(rangeMonths);
 	}
 
-	function toggleProfileMenu() {
-		showProfileMenu = !showProfileMenu;
+	// Profile menu handlers
+	function handleProfileToggle(event) {
+		showProfileMenu = event.detail.showMenu;
 	}
 
-	function triggerFileInput() {
-		fileInput.click();
-	}
-
-	async function handleImageUpload(e) {
-		const file = e.target.files?.[0];
-		if (!file) return;
-
-		// Validate file type
-		if (!file.type.startsWith('image/')) {
-			alert('Please select an image file');
-			return;
+	async function handleProfileUpload(event) {
+		const base64Image = event.detail.image;
+		try {
+			const result = await Api('/profile', {
+				method: 'PUT',
+				body: { profileImage: base64Image }
+			});
+			profileImage = result.profileImage;
+			showProfileMenu = false;
+		} catch (err) {
+			console.error('Failed to upload profile image:', err);
+			alert('Failed to upload image');
 		}
-
-		// Validate file size (max 2MB)
-		if (file.size > 2 * 1024 * 1024) {
-			alert('Image size must be less than 2MB');
-			return;
-		}
-
-		// Convert to base64
-		const reader = new FileReader();
-		reader.onload = async (event) => {
-			const base64Image = event.target.result;
-			
-			try {
-				const result = await Api('/profile', {
-					method: 'PUT',
-					body: { profileImage: base64Image }
-				});
-				profileImage = result.profileImage;
-				showProfileMenu = false;
-			} catch (err) {
-				console.error('Failed to upload profile image:', err);
-				alert('Failed to upload image');
-			}
-		};
-		reader.readAsDataURL(file);
 	}
 
-	function removeProfileImage() {
-		if (confirm('Remove profile image?')) {
-			Api('/profile', {
+	async function handleProfileRemove() {
+		try {
+			const result = await Api('/profile', {
 				method: 'PUT',
 				body: { profileImage: null }
-			}).then(result => {
-				profileImage = result.profileImage;
-				showProfileMenu = false;
-			}).catch(err => {
-				console.error('Failed to remove profile image:', err);
-				alert('Failed to remove image');
 			});
-		}
-	}
-
-	// Close menu when clicking outside
-	function handleClickOutside(e) {
-		if (showProfileMenu && !e.target.closest('.profile-container')) {
+			profileImage = result.profileImage;
 			showProfileMenu = false;
+		} catch (err) {
+			console.error('Failed to remove profile image:', err);
+			alert('Failed to remove image');
 		}
 	}
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
-<main class="main-content" on:click={handleClickOutside} role="button" tabindex="0">
+<main class="main-content">
 		<div class="top-bar">
 			<div class="search-container">
 				<i class="fas fa-search"></i>
@@ -284,52 +249,16 @@ import { onMount } from 'svelte';
 			</div>
 			<div class="actions">
 				<i class="fas fa-bell"></i>
-				<div class="profile-container">
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
-					<div 
-						class="profile" 
-						on:click={toggleProfileMenu} 
-						role="button" 
-						tabindex="0"
-						style={profileImage ? `background-image: url(${profileImage}); background-size: cover; background-position: center;` : ''}
-					>
-						{#if !profileImage}
-							<User size={18} />
-						{/if}
-					</div>
-					
-					{#if showProfileMenu}
-						<div class="profile-menu">
-							<div class="menu-header">Profile</div>
-							<button class="menu-item" on:click={triggerFileInput}>
-								<Camera size={16} />
-								{profileImage ? 'Change Photo' : 'Upload Photo'}
-							</button>
-							{#if profileImage}
-								<button class="menu-item" on:click={removeProfileImage}>
-									<Trash2 size={16} />
-									Remove Photo
-								</button>
-							{/if}
-							<div class="menu-divider"></div>
-							<button class="menu-item" on:click={handleLogout}>
-								<LogOut size={16} />
-								Logout
-							</button>
-						</div>
-					{/if}
-				</div>
+				<ProfileMenu 
+					bind:profileImage 
+					bind:showMenu={showProfileMenu}
+					on:toggle={handleProfileToggle}
+					on:upload={handleProfileUpload}
+					on:remove={handleProfileRemove}
+					on:logout={handleLogout}
+				/>
 			</div>
 		</div>
-
-		<!-- Hidden file input -->
-		<input 
-			type="file" 
-			bind:this={fileInput} 
-			on:change={handleImageUpload}
-			accept="image/*"
-			style="display: none;"
-		/>
 
 		<section class="burnrate-section">
 			<div class="burnrate-header">
@@ -417,71 +346,6 @@ import { onMount } from 'svelte';
 		font-size: 18px;
 		color: #0c5489;
 		cursor: pointer;
-	}
-	.profile-container {
-		position: relative;
-	}
-	.top-bar .profile {
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		background: #0c5489;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: white;
-		font-size: 14px;
-		position: relative;
-		overflow: hidden;
-	}
-	.top-bar .profile:hover {
-		opacity: 0.9;
-	}
-	.profile-menu {
-		position: absolute;
-		top: 45px;
-		right: 0;
-		background: white;
-		border: 1px solid #e0e0e0;
-		border-radius: 8px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		min-width: 200px;
-		z-index: 1000;
-		overflow: hidden;
-	}
-	.menu-header {
-		padding: 12px 16px;
-		font-weight: 600;
-		color: #0c5489;
-		border-bottom: 1px solid #e0e0e0;
-		font-size: 14px;
-	}
-	.menu-item {
-		width: 100%;
-		padding: 12px 16px;
-		background: none;
-		border: none;
-		text-align: left;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		color: #333;
-		font-size: 14px;
-		transition: background 0.2s;
-	}
-	.menu-item:hover {
-		background: #f5f5f5;
-	}
-	.menu-item :global(svg) {
-		flex-shrink: 0;
-		color: #0c5489;
-	}
-	.menu-divider {
-		height: 1px;
-		background: #e0e0e0;
-		margin: 4px 0;
 	}
 	.burnrate-section {
 		padding: 20px;

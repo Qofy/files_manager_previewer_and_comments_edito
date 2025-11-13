@@ -2,19 +2,25 @@
   import { onMount, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import { Auth } from '$lib/utils/auth.js';
+  import { Api } from '$lib/utils/api.js';
   import { browser } from '$app/environment';
 	import Aside from '$lib/pages/Aside.svelte';
+	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
+	import TagPill from '$lib/components/TagPill.svelte';
+	import TagSelector from '$lib/components/TagSelector.svelte';
 
   // State
   let currentFolder = null;
   let allFiles = [];
   let folders = [];
   let filterType = 'all';
+  let filterTag = 'all';
   let sortDir = 'desc';
   let searchQuery = '';
   let selected = new Set();
   let dragOverFolder = null;
   let mounted = false;
+  let availableTags = [];
   
   // Viewer state
   let selectedFile = null;
@@ -31,6 +37,7 @@
   let renderTasks = new Map();
   let profileImage = null;
   let currentUsername = null;
+  let showProfileMenu = false;
   
   const _fileListCache = new Map();
   
@@ -55,6 +62,19 @@
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
+    }
+    
+    // Load available tags
+    try {
+      const token = Auth.token();
+      const res = await fetch('/tags', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (res.ok) {
+        availableTags = await res.json();
+      }
+    } catch (err) {
+      console.error('Failed to load tags:', err);
     }
     
     mounted = true;
@@ -115,6 +135,9 @@
     }
     if (filterType !== 'all') {
       params.append('category', filterType);
+    }
+    if (filterTag !== 'all') {
+      params.append('tag', filterTag);
     }
     if (searchQuery) {
       params.append('search', searchQuery);
@@ -393,6 +416,95 @@
     goto('/login');
   }
 
+  // Tag handlers
+  async function handleAddTag(event) {
+    const { itemId, itemType, tags } = event.detail;
+    try {
+      const token = Auth.token();
+      const endpoint = itemType === 'file' ? `/files/${itemId}/tags` : `/folders/${itemId}/tags`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tags })
+      });
+      
+      if (res.ok) {
+        // Reload files and folders to show updated tags
+        await loadFiles();
+        await loadFolders();
+      }
+    } catch (err) {
+      console.error('Failed to add tag:', err);
+    }
+  }
+
+  async function handleRemoveTag(event) {
+    const { itemId, itemType, tag } = event.detail;
+    try {
+      const token = Auth.token();
+      const endpoint = itemType === 'file' ? `/files/${itemId}/tags?tag=${tag}` : `/folders/${itemId}/tags?tag=${tag}`;
+      const res = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      
+      if (res.ok) {
+        // Reload files and folders to show updated tags
+        await loadFiles();
+        await loadFolders();
+      }
+    } catch (err) {
+      console.error('Failed to remove tag:', err);
+    }
+  }
+
+  function getTagColor(tagId) {
+    const tag = availableTags.find(t => t.id === tagId);
+    return tag ? tag.color : '#5f6368';
+  }
+
+  function getTagName(tagId) {
+    const tag = availableTags.find(t => t.id === tagId);
+    return tag ? tag.name : tagId;
+  }
+
+  // Profile menu handlers
+  function handleProfileToggle(event) {
+    showProfileMenu = event.detail.showMenu;
+  }
+
+  async function handleProfileUpload(event) {
+    const base64Image = event.detail.image;
+    try {
+      const result = await Api('/profile', {
+        method: 'PUT',
+        body: { profileImage: base64Image }
+      });
+      profileImage = result.profileImage;
+      showProfileMenu = false;
+    } catch (err) {
+      console.error('Failed to upload profile image:', err);
+      alert('Failed to upload image');
+    }
+  }
+
+  async function handleProfileRemove() {
+    try {
+      const result = await Api('/profile', {
+        method: 'PUT',
+        body: { profileImage: null }
+      });
+      profileImage = result.profileImage;
+      showProfileMenu = false;
+    } catch (err) {
+      console.error('Failed to remove profile image:', err);
+      alert('Failed to remove image');
+    }
+  }
+
   // Reactive filtered files
   $: filteredFiles = allFiles.sort((a, b) => {
     const da = new Date(a.uploaded_at || 0);
@@ -424,7 +536,7 @@
   }
 
   // Watch for filter/search changes (only after mount)
-  $: if (mounted && (filterType || searchQuery !== undefined)) {
+  $: if (mounted && (filterType || filterTag || searchQuery !== undefined)) {
     loadFiles();
   }
   
@@ -854,9 +966,14 @@
 				</div>
 				<div class="actions">
 					<i class="fas fa-bell"></i>
-					<!-- svelte-ignore a11y-click-events-have-key-events -->
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
-					<div class="profile" on:click={handleLogout}></div>
+					<ProfileMenu 
+						bind:profileImage 
+						bind:showMenu={showProfileMenu}
+						on:toggle={handleProfileToggle}
+						on:upload={handleProfileUpload}
+						on:remove={handleProfileRemove}
+						on:logout={handleLogout}
+					/>
 				</div>
 			</div>
 	
@@ -875,6 +992,15 @@
 								<option value="videos">Videos</option>
 								<option value="audio">Audio</option>
 								<option value="other">Other</option>
+							</select>
+						</label>
+						<label>
+							<span>Tag</span>
+							<select bind:value={filterTag}>
+								<option value="all">All Tags</option>
+								{#each availableTags as tag}
+									<option value={tag.id}>{tag.name}</option>
+								{/each}
 							</select>
 						</label>
 						<label>
@@ -931,13 +1057,29 @@
 							<div 
 								class="folder-card" 
 								class:drag-over={dragOverFolder === folder.id}
-								on:click={() => navigateToFolder(folder.id)}
 								on:dragover={(e) => handleDragOver(e, folder.id)}
 								on:dragleave={() => handleDragLeave(folder.id)}
 								on:drop={(e) => handleDrop(e, folder.id)}
 							>
-								<i class="fas fa-folder"></i>
-								<span>{folder.name}</span>
+								<div class="folder-content" on:click={() => navigateToFolder(folder.id)}>
+									<i class="fas fa-folder"></i>
+									<span>{folder.name}</span>
+								</div>
+								<div class="folder-tags" on:click|stopPropagation>
+									{#if folder.tags && folder.tags.length > 0}
+										{#each folder.tags as tagId}
+											<TagPill tag={getTagName(tagId)} color={getTagColor(tagId)} />
+										{/each}
+									{/if}
+									<TagSelector
+										itemId={folder.id}
+										itemType="folder"
+										currentTags={folder.tags || []}
+										{availableTags}
+										on:add={handleAddTag}
+										on:remove={handleRemoveTag}
+									/>
+								</div>
 							</div>
 						{/each}
 					</div>
@@ -950,6 +1092,7 @@
 							<th>Name</th>
 							<th>Size</th>
 							<th>Type</th>
+							<th>Tags</th>
 							<th>Date</th>
 							<th style="text-align: right">Actions</th>
 						</tr>
@@ -957,7 +1100,7 @@
 					<tbody>
 						{#if filteredFiles.length === 0}
 							<tr>
-								<td colspan="6" style="padding:40px;color:#888;text-align:center;">
+								<td colspan="7" style="padding:40px;color:#888;text-align:center;">
 									{#if searchQuery}
 										No files match your search
 									{:else if filterType !== 'all'}
@@ -988,6 +1131,23 @@
 									</td>
 									<td on:click={() => handleView(file)}>{formatBytes(file.size)}</td>
 									<td on:click={() => handleView(file)}>{file.type.toUpperCase()}</td>
+									<td on:click|stopPropagation>
+										<div class="tags-cell">
+											{#if file.tags && file.tags.length > 0}
+												{#each file.tags as tagId}
+													<TagPill tag={getTagName(tagId)} color={getTagColor(tagId)} />
+												{/each}
+											{/if}
+											<TagSelector
+												itemId={file.id}
+												itemType="file"
+												currentTags={file.tags || []}
+												{availableTags}
+												on:add={handleAddTag}
+												on:remove={handleRemoveTag}
+											/>
+										</div>
+									</td>
 									<td on:click={() => handleView(file)}>{new Date(file.uploaded_at).toLocaleDateString()}</td>
 									<td style="text-align: right" on:click|stopPropagation>
 										{#if canPreview(file.type)}
@@ -1303,14 +1463,25 @@
   .folder-card {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.2s;
     background: #fafafa;
+    gap: 12px;
+    min-height: 100px;
+  }
+
+  .folder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    cursor: pointer;
+    flex: 1;
   }
 
   .folder-card:hover {
@@ -1335,6 +1506,23 @@
     color: #333;
     text-align: center;
     word-break: break-word;
+  }
+
+  .folder-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    min-height: 24px;
+  }
+
+  .tags-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 0;
   }
 
   .file-table {

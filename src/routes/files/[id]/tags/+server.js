@@ -1,0 +1,96 @@
+import { json } from '@sveltejs/kit';
+import jwt from 'jsonwebtoken';
+import { filesStorage } from '$lib/server/storage.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Helper function to verify JWT
+function verifyToken(request) {
+	const authHeader = request.headers.get('Authorization');
+	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		return null;
+	}
+
+	const token = authHeader.split(' ')[1];
+	try {
+		const decoded = jwt.verify(token, JWT_SECRET);
+		return decoded.username;
+	} catch {
+		return null;
+	}
+}
+
+// POST /files/[id]/tags - Add tags to a file
+export async function POST({ request, params }) {
+	const username = verifyToken(request);
+	if (!username) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const { id } = params;
+	const file = filesStorage.get(id);
+
+	if (!file) {
+		return json({ error: 'File not found' }, { status: 404 });
+	}
+
+	if (file.owner !== username) {
+		return json({ error: 'Forbidden' }, { status: 403 });
+	}
+
+	const { tags } = await request.json();
+
+	if (!Array.isArray(tags)) {
+		return json({ error: 'Tags must be an array' }, { status: 400 });
+	}
+
+	// Initialize tags array if it doesn't exist
+	if (!file.tags) {
+		file.tags = [];
+	}
+
+	// Add new tags (avoid duplicates)
+	tags.forEach((tag) => {
+		if (!file.tags.includes(tag)) {
+			file.tags.push(tag);
+		}
+	});
+
+	file.updated_at = new Date().toISOString();
+	filesStorage.set(id, file);
+
+	return json({ file });
+}
+
+// DELETE /files/[id]/tags - Remove tags from a file
+export async function DELETE({ request, params, url }) {
+	const username = verifyToken(request);
+	if (!username) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const { id } = params;
+	const file = filesStorage.get(id);
+
+	if (!file) {
+		return json({ error: 'File not found' }, { status: 404 });
+	}
+
+	if (file.owner !== username) {
+		return json({ error: 'Forbidden' }, { status: 403 });
+	}
+
+	const tagToRemove = url.searchParams.get('tag');
+
+	if (!tagToRemove) {
+		return json({ error: 'Tag parameter required' }, { status: 400 });
+	}
+
+	if (file.tags) {
+		file.tags = file.tags.filter((tag) => tag !== tagToRemove);
+		file.updated_at = new Date().toISOString();
+		filesStorage.set(id, file);
+	}
+
+	return json({ file });
+}

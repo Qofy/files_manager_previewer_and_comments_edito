@@ -4,6 +4,7 @@
 	import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
 	import Aside from '$lib/pages/Aside.svelte';
+	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 
 	let clientsMap = {};
 	let currentStatus = 'Unpaid';
@@ -13,15 +14,27 @@
 	let selectedInvoice = null;
 	let selectedClient = null;
 	let selectedProfile = null;
+	let showProfileMenu = false;
+	let profileImage = null;
 
 	onMount(async () => {
 		if (!Auth.token()) {
 			goto('/login');
 			return;
 		}
+		await loadProfile();
 		await loadClients();
 		await loadInvoices();
 	});
+
+	async function loadProfile() {
+		try {
+			const profile = await Api('/profile');
+			profileImage = profile.profileImage;
+		} catch (err) {
+			console.error('Failed to load profile:', err);
+		}
+	}
 
 	async function loadClients() {
 		try {
@@ -102,6 +115,40 @@
 		Auth.clear();
 		goto('/login');
 	}
+
+	// Profile menu handlers
+	function handleProfileToggle(event) {
+		showProfileMenu = event.detail.showMenu;
+	}
+
+	async function handleProfileUpload(event) {
+		const base64Image = event.detail.image;
+		try {
+			const result = await Api('/profile', {
+				method: 'PUT',
+				body: { profileImage: base64Image }
+			});
+			profileImage = result.profileImage;
+			showProfileMenu = false;
+		} catch (err) {
+			console.error('Failed to upload profile image:', err);
+			alert('Failed to upload image');
+		}
+	}
+
+	async function handleProfileRemove() {
+		try {
+			const result = await Api('/profile', {
+				method: 'PUT',
+				body: { profileImage: null }
+			});
+			profileImage = result.profileImage;
+			showProfileMenu = false;
+		} catch (err) {
+			console.error('Failed to remove profile image:', err);
+			alert('Failed to remove image');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -124,7 +171,14 @@
 			</div>
 			<div class="actions">
 				<i class="fas fa-bell"></i>
-				<div class="profile" on:click={handleLogout} role="button" tabindex="0"></div>
+				<ProfileMenu 
+					bind:profileImage 
+					bind:showMenu={showProfileMenu}
+					on:toggle={handleProfileToggle}
+					on:upload={handleProfileUpload}
+					on:remove={handleProfileRemove}
+					on:logout={handleLogout}
+				/>
 			</div>
 		</div>
 
@@ -354,13 +408,6 @@
 	.top-bar .actions i {
 		font-size: 18px;
 		color: #0c5489;
-		cursor: pointer;
-	}
-	.top-bar .profile {
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		background: #0c5489;
 		cursor: pointer;
 	}
 	.filter-bar {
