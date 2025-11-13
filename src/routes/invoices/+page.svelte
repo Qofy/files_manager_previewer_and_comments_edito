@@ -313,43 +313,7 @@
 		min-height: 100vh;
 		overflow: hidden;
 	}
-	.sidebar {
-		width: 60px;
-		background: #fff;
-		border-right: 1px solid #e0e0e0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding-top: 10px;
-	}
-	.sidebar .logo {
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		background: #0c5489;
-		margin-bottom: 20px;
-	}
-	.sidebar ul {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-	.sidebar ul li {
-		margin: 15px 0;
-		width: 40px;
-		height: 40px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 8px;
-		color: #0c5489;
-		cursor: pointer;
-		transition: background 0.2s ease;
-	}
-	.sidebar ul li:hover,
-	.sidebar ul li.active {
-		background: #f0f6fa;
-	}
+	
 	.main-content {
 		flex: 1;
 		display: flex;

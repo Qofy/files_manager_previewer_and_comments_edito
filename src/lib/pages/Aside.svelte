@@ -1,9 +1,13 @@
 <script>
   import {goto} from "$app/navigation"
+	import logo from "$lib/assets/logo.png"
+	
 </script>
 
 <aside class="sidebar">
-		<div class="logo"></div>
+		<div class="logo">
+			<img src={logo} alt="logo" class="logo-img">
+		</div>
 		<ul class="nav">
 			
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -32,11 +36,15 @@
 		align-items: center;
 		padding-top: 10px;
 	}
-	.sidebar .logo {
+
+	.logo-img{
+		object-fit: cover;
+	}
+	.sidebar .logo, .logo-img{
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
-		background: #0c5489;
+		/* background: #0c5489; */
 		margin-bottom: 20px;
 	}
 	.sidebar ul {
