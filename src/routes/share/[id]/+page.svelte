@@ -29,14 +29,22 @@
     }
 
     try {
-      // Load file metadata
-      const fileResponse = await fetch(`/files/${fileId}`);
+      // Load file metadata from the API endpoint
+      // We'll create a dedicated endpoint for getting file metadata
+      const fileResponse = await fetch(`/api/share/files/${fileId}`);
       
       if (!fileResponse.ok) {
+        const errorText = await fileResponse.text();
+        console.error('File response error:', errorText);
         throw new Error('File not found');
       }
       
-      selectedFile = await fileResponse.json();
+      const contentType = fileResponse.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        selectedFile = await fileResponse.json();
+      } else {
+        throw new Error('Invalid response format');
+      }
       
       // Load public comments
       await loadComments();
