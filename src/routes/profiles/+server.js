@@ -3,12 +3,17 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Mock clients data
-const clients = [
-	{ id: '1', name: 'Acme Corp', email: 'contact@acme.com', phone: '+1 555 0100' },
-	{ id: '2', name: 'TechStart Inc', email: 'info@techstart.com', phone: '+1 555 0200' },
-	{ id: '3', name: 'Global Solutions', email: 'hello@global.com', phone: '+1 555 0300' },
-	{ id: '4', name: 'Innovation Labs', email: 'contact@innovation.com', phone: '+1 555 0400' }
+// Mock business profiles data (for invoices)
+const profiles = [
+	{
+		id: '1',
+		business_name: 'My Business',
+		address: '123 Business St, City, State 12345',
+		email: 'hello@mybusiness.com',
+		phone: '+1 555 0100',
+		tax_id: '12-3456789',
+		logo: null
+	}
 ];
 
 /** @type {import('./$types').RequestHandler} */
@@ -27,10 +32,10 @@ export async function GET({ request }) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
 
-		return json(clients);
+		return json(profiles);
 	} catch (error) {
-		console.error('Clients error:', error);
-		return json({ error: 'Failed to load clients' }, { status: 500 });
+		console.error('Profiles error:', error);
+		return json({ error: 'Failed to load profiles' }, { status: 500 });
 	}
 }
 
@@ -51,15 +56,15 @@ export async function POST({ request }) {
 		}
 
 		const body = await request.json();
-		const newClient = {
+		const newProfile = {
 			id: Date.now().toString(),
 			...body
 		};
-		clients.push(newClient);
+		profiles.push(newProfile);
 
-		return json(newClient, { status: 201 });
+		return json(newProfile, { status: 201 });
 	} catch (error) {
-		console.error('Create client error:', error);
-		return json({ error: 'Failed to create client' }, { status: 500 });
+		console.error('Create profile error:', error);
+		return json({ error: 'Failed to create profile' }, { status: 500 });
 	}
 }

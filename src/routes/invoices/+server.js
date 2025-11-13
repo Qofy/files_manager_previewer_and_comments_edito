@@ -9,42 +9,48 @@ const invoices = [
 		id: '1',
 		client_id: '1',
 		client_name: 'Acme Corp',
+		profile_id: '1',
 		invoice_number: 'INV-2025-001',
 		date: '2025-01-15',
 		due_date: '2025-02-15',
 		amount: 5420.0,
+		total: 5420.0,
 		paid: false,
 		status: 'pending',
 		items: [
-			{ description: 'Web Development', quantity: 40, rate: 100, amount: 4000 },
-			{ description: 'UI Design', quantity: 20, rate: 80, amount: 1600 }
+			{ description: 'Web Development', quantity: 40, rate: 100, unit_price: 100, amount: 4000 },
+			{ description: 'UI Design', quantity: 20, rate: 80, unit_price: 80, amount: 1600 }
 		]
 	},
 	{
 		id: '2',
 		client_id: '2',
 		client_name: 'TechStart Inc',
+		profile_id: '1',
 		invoice_number: 'INV-2025-002',
 		date: '2025-01-20',
 		due_date: '2025-02-20',
 		amount: 8950.0,
+		total: 8950.0,
 		paid: true,
 		status: 'paid',
-		items: [{ description: 'Consulting Services', quantity: 60, rate: 150, amount: 9000 }]
+		items: [{ description: 'Consulting Services', quantity: 60, rate: 150, unit_price: 150, amount: 9000 }]
 	},
 	{
 		id: '3',
 		client_id: '3',
 		client_name: 'Global Solutions',
+		profile_id: '1',
 		invoice_number: 'INV-2025-003',
 		date: '2025-02-01',
 		due_date: '2025-03-01',
 		amount: 12300.0,
+		total: 12300.0,
 		paid: false,
 		status: 'overdue',
 		items: [
-			{ description: 'Software Development', quantity: 80, rate: 120, amount: 9600 },
-			{ description: 'Project Management', quantity: 30, rate: 90, amount: 2700 }
+			{ description: 'Software Development', quantity: 80, rate: 120, unit_price: 120, amount: 9600 },
+			{ description: 'Project Management', quantity: 30, rate: 90, unit_price: 90, amount: 2700 }
 		]
 	}
 ];

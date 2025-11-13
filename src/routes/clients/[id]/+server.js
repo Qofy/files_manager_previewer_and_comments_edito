@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Mock clients data
+// Mock clients data (shared with parent route)
 const clients = [
 	{ id: '1', name: 'Acme Corp', email: 'contact@acme.com', phone: '+1 555 0100' },
 	{ id: '2', name: 'TechStart Inc', email: 'info@techstart.com', phone: '+1 555 0200' },
@@ -12,7 +12,7 @@ const clients = [
 ];
 
 /** @type {import('./$types').RequestHandler} */
-export async function GET({ request }) {
+export async function GET({ request, params }) {
 	try {
 		// Verify authentication
 		const authHeader = request.headers.get('Authorization');
@@ -27,39 +27,14 @@ export async function GET({ request }) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
 
-		return json(clients);
-	} catch (error) {
-		console.error('Clients error:', error);
-		return json({ error: 'Failed to load clients' }, { status: 500 });
-	}
-}
-
-/** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
-	try {
-		// Verify authentication
-		const authHeader = request.headers.get('Authorization');
-		if (!authHeader || !authHeader.startsWith('Bearer ')) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
+		const client = clients.find(c => c.id === params.id);
+		if (!client) {
+			return json({ error: 'Client not found' }, { status: 404 });
 		}
 
-		const token = authHeader.substring(7);
-		try {
-			jwt.verify(token, JWT_SECRET);
-		} catch {
-			return json({ error: 'Invalid token' }, { status: 401 });
-		}
-
-		const body = await request.json();
-		const newClient = {
-			id: Date.now().toString(),
-			...body
-		};
-		clients.push(newClient);
-
-		return json(newClient, { status: 201 });
+		return json(client);
 	} catch (error) {
-		console.error('Create client error:', error);
-		return json({ error: 'Failed to create client' }, { status: 500 });
+		console.error('Client error:', error);
+		return json({ error: 'Failed to load client' }, { status: 500 });
 	}
 }
