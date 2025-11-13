@@ -485,6 +485,7 @@
 
   async function handleSendComment(event) {
     const text = event.detail.text;
+    const highlightId = event.detail.highlightId; // Optional highlight link
     if (!text || !selectedFile) return;
 
     const token = Auth.token();
@@ -497,6 +498,7 @@
       y: pos.y,
       text: text,
       scope,
+      highlightId, // Link to highlight if provided
     };
 
     const optimistic = {
@@ -549,6 +551,44 @@
   function handlePagesRendered() {
     if (fileViewer) {
       fileViewer.renderCommentPins(commentsState);
+    }
+  }
+
+  function handleHighlightCreated(event) {
+    const { highlight } = event.detail;
+    
+    // Pre-fill comment text with the highlighted text
+    commentText = `"${highlight.text}"\n\n`;
+    
+    // Set click position to the highlight position
+    lastClickPos = {
+      page: highlight.page,
+      x: highlight.x,
+      y: highlight.y
+    };
+    
+    // Optionally auto-send a comment or let user edit it
+    // For now, just pre-fill the comment box so user can add their thoughts
+  }
+
+  function handleHighlightClick(event) {
+    const { highlight } = event.detail;
+    
+    // Find and scroll to the comment associated with this highlight
+    const relatedComment = commentsState.find(c => c.highlightId === highlight.id);
+    
+    if (relatedComment) {
+      // Scroll to the comment in the sidebar
+      // You could add a highlight effect or focus the comment
+      console.log('Related comment:', relatedComment);
+    } else {
+      // No comment yet, pre-fill with highlight text
+      commentText = `"${highlight.text}"\n\n`;
+      lastClickPos = {
+        page: highlight.page,
+        x: highlight.x,
+        y: highlight.y
+      };
     }
   }
 
@@ -630,6 +670,8 @@
       on:scopeChange={handleScopeChange}
       on:pdfLoaded={handlePdfLoaded}
       on:pagesRendered={handlePagesRendered}
+      on:highlightCreated={handleHighlightCreated}
+      on:highlightClick={handleHighlightClick}
     />
     
     <CommentSidebar 

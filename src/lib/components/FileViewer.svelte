@@ -15,6 +15,10 @@
   let fileExt = '';
   let dimLabel = '';
   let renderTasks = new Map();
+  let highlights = []; // Store text highlights
+  let showHighlightDialog = false;
+  let highlightDialogPos = { x: 0, y: 0 };
+  let selectedTextData = null;
 
   $: zoomPercent = Math.round(zoomLevel * 100);
 
@@ -105,13 +109,22 @@
       container = document.createElement('div');
       container.className = 'page';
       container.dataset.page = String(pageNumber);
+      container.style.position = 'relative';
+      
       const canvas = document.createElement('canvas');
       container.appendChild(canvas);
+      
+      // Add text layer container
+      const textLayer = document.createElement('div');
+      textLayer.className = 'textLayer';
+      container.appendChild(textLayer);
+      
       pagesEl?.appendChild(container);
     }
 
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
+    const textLayer = container.querySelector('.textLayer');
 
     const prev = renderTasks.get(pageNumber);
     if (prev && typeof prev.cancel === 'function') {
@@ -128,6 +141,22 @@
 
     try {
       await task.promise;
+      
+      // Render text layer
+      const textContent = await page.getTextContent();
+      textLayer.innerHTML = '';
+      textLayer.style.width = viewport.width + 'px';
+      textLayer.style.height = viewport.height + 'px';
+      textLayer.style.setProperty('--scale-factor', scale);
+      
+      if (window.pdfjsLib) {
+        window.pdfjsLib.renderTextLayer({
+          textContentSource: textContent,
+          container: textLayer,
+          viewport: viewport,
+          textDivs: []
+        });
+      }
     } catch (e) {
       if (!(e && e.name === 'RenderingCancelledException')) throw e;
     } finally {
@@ -295,6 +324,96 @@
     dispatch('scopeChange', { scope });
   }
 
+  function handleTextSelection(event) {
+    if (fileExt !== 'pdf') return;
+    
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    if (!selectedText) return;
+    
+    // Find which page the selection is on
+    const range = selection.getRangeAt(0);
+    const pageDiv = range.startContainer.parentElement?.closest('.page');
+    if (!pageDiv) return;
+    
+    const pageNumber = parseInt(pageDiv.dataset.page, 10);
+    const rect = pageDiv.getBoundingClientRect();
+    const rangeRect = range.getBoundingClientRect();
+    
+    // Calculate relative position within the page
+    const x = (rangeRect.left - rect.left) / rect.width;
+    const y = (rangeRect.top - rect.top) / rect.height;
+    
+    // Store selection data
+    selectedTextData = {
+      text: selectedText,
+      page: pageNumber,
+      x,
+      y,
+      rangeRect: {
+        x: (rangeRect.left - rect.left) / rect.width,
+        y: (rangeRect.top - rect.top) / rect.height,
+        width: rangeRect.width / rect.width,
+        height: rangeRect.height / rect.height
+      }
+    };
+    
+    // Show dialog near the selection
+    highlightDialogPos = {
+      x: event.clientX,
+      y: event.clientY
+    };
+    showHighlightDialog = true;
+  }
+
+  function addHighlight(color = '#ffeb3b') {
+    if (!selectedTextData) return;
+    
+    const highlight = {
+      id: Date.now(),
+      ...selectedTextData,
+      color,
+      comment: null
+    };
+    
+    highlights = [...highlights, highlight];
+    renderHighlights();
+    showHighlightDialog = false;
+    
+    // Dispatch event to create comment linked to this highlight
+    dispatch('highlightCreated', { highlight });
+  }
+
+  function renderHighlights() {
+    if (!pagesEl) return;
+    
+    // Remove old highlights
+    pagesEl.querySelectorAll('.highlight-overlay').forEach(h => h.remove());
+    
+    highlights.forEach(h => {
+      const pageDiv = pagesEl.querySelector(`[data-page="${h.page}"]`);
+      if (!pageDiv) return;
+      
+      const overlay = document.createElement('div');
+      overlay.className = 'highlight-overlay';
+      overlay.style.left = h.rangeRect.x * 100 + '%';
+      overlay.style.top = h.rangeRect.y * 100 + '%';
+      overlay.style.width = h.rangeRect.width * 100 + '%';
+      overlay.style.height = h.rangeRect.height * 100 + '%';
+      overlay.style.backgroundColor = h.color;
+      overlay.style.opacity = '0.3';
+      overlay.dataset.highlightId = h.id;
+      overlay.title = h.text;
+      
+      overlay.addEventListener('click', () => {
+        dispatch('highlightClick', { highlight: h });
+      });
+      
+      pageDiv.appendChild(overlay);
+    });
+  }
+
   export function renderCommentPins(commentsState) {
     if (!pagesEl) return;
     
@@ -352,7 +471,12 @@
     {#if selectedFile}
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <div bind:this={pagesEl} on:click={handlePageClick} id="pages"></div>
+      <div 
+        bind:this={pagesEl} 
+        on:click={handlePageClick}
+        on:mouseup={handleTextSelection}
+        id="pages"
+      ></div>
     {:else}
       <div class="no-file-placeholder">
         <i class="fas fa-file-alt"></i>
@@ -362,6 +486,29 @@
     {/if}
   </main>
 </div>
+
+{#if showHighlightDialog}
+  <div 
+    class="highlight-dialog"
+    style="left: {highlightDialogPos.x}px; top: {highlightDialogPos.y}px;"
+  >
+    <button on:click={() => addHighlight('#ffeb3b')} class="color-btn yellow">
+      <i class="fas fa-highlighter"></i> Yellow
+    </button>
+    <button on:click={() => addHighlight('#80ff80')} class="color-btn green">
+      <i class="fas fa-highlighter"></i> Green
+    </button>
+    <button on:click={() => addHighlight('#ff9999')} class="color-btn red">
+      <i class="fas fa-highlighter"></i> Red
+    </button>
+    <button on:click={() => addHighlight('#9999ff')} class="color-btn blue">
+      <i class="fas fa-highlighter"></i> Blue
+    </button>
+    <button on:click={() => showHighlightDialog = false} class="cancel-btn">
+      <i class="fas fa-times"></i> Cancel
+    </button>
+  </div>
+{/if}
 
 <style>
   .viewer-container {
@@ -532,4 +679,88 @@
     margin: 0 auto;
     overflow-x: auto;
   }
+
+  /* Text layer for PDF selection */
+  :global(.textLayer) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    opacity: 0.2;
+    line-height: 1.0;
+    pointer-events: auto;
+  }
+
+  :global(.textLayer > span) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+
+  :global(.textLayer ::selection) {
+    background: rgba(0, 100, 255, 0.3);
+  }
+
+  /* Highlight overlays */
+  :global(.highlight-overlay) {
+    position: absolute;
+    pointer-events: auto;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: opacity 0.2s;
+  }
+
+  :global(.highlight-overlay:hover) {
+    opacity: 0.5 !important;
+  }
+
+  /* Highlight dialog */
+  .highlight-dialog {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 1000;
+    min-width: 150px;
+  }
+
+  .highlight-dialog button {
+    padding: 8px 12px;
+    border: none;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .highlight-dialog button:hover {
+    background: #f5f5f5;
+  }
+
+  .color-btn.yellow i { color: #f9a825; }
+  .color-btn.green i { color: #43a047; }
+  .color-btn.red i { color: #e53935; }
+  .color-btn.blue i { color: #1e88e5; }
+
+  .cancel-btn {
+    border-top: 1px solid #eee !important;
+    margin-top: 4px;
+    padding-top: 8px !important;
+    color: #666 !important;
+  }
+
 </style>
