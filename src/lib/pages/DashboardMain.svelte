@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
+	import { User, Camera, Trash2, LogOut } from "lucide-svelte";
 
   let rangeMonths = 12;
 	let runwayInfo = 'Loading...';
@@ -293,7 +294,7 @@ import { onMount } from 'svelte';
 						style={profileImage ? `background-image: url(${profileImage}); background-size: cover; background-position: center;` : ''}
 					>
 						{#if !profileImage}
-							<i class="fas fa-user"></i>
+							<User size={18} />
 						{/if}
 					</div>
 					
@@ -301,18 +302,18 @@ import { onMount } from 'svelte';
 						<div class="profile-menu">
 							<div class="menu-header">Profile</div>
 							<button class="menu-item" on:click={triggerFileInput}>
-								<i class="fas fa-camera"></i>
+								<Camera size={16} />
 								{profileImage ? 'Change Photo' : 'Upload Photo'}
 							</button>
 							{#if profileImage}
 								<button class="menu-item" on:click={removeProfileImage}>
-									<i class="fas fa-trash"></i>
+									<Trash2 size={16} />
 									Remove Photo
 								</button>
 							{/if}
 							<div class="menu-divider"></div>
 							<button class="menu-item" on:click={handleLogout}>
-								<i class="fas fa-sign-out-alt"></i>
+								<LogOut size={16} />
 								Logout
 							</button>
 						</div>
@@ -473,8 +474,8 @@ import { onMount } from 'svelte';
 	.menu-item:hover {
 		background: #f5f5f5;
 	}
-	.menu-item i {
-		width: 16px;
+	.menu-item :global(svg) {
+		flex-shrink: 0;
 		color: #0c5489;
 	}
 	.menu-divider {
