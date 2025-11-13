@@ -6,6 +6,7 @@
   export let selectedFile = null;
   export let profileImage = null;
   export let currentUsername = null;
+  export let readOnly = false; // Add read-only mode support
 
   const dispatch = createEventDispatcher();
 
@@ -13,9 +14,10 @@
     .slice()
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-  $: canSend = commentText.trim().length > 0;
+  $: canSend = commentText.trim().length > 0 && !readOnly;
 
   function handleSendComment() {
+    if (readOnly) return;
     dispatch('sendComment', { text: commentText });
   }
 </script>
@@ -63,14 +65,21 @@
       {/each}
     {/if}
   </div>
-  <div class="new-comment">
-    <textarea
-      bind:value={commentText}
-      placeholder={selectedFile ? "Add a comment… (click a spot in the file first)" : "Select a file to add comments"}
-      disabled={!selectedFile}
-    ></textarea>
-    <button on:click={handleSendComment} disabled={!canSend || !selectedFile}>Send</button>
-  </div>
+  {#if !readOnly}
+    <div class="new-comment">
+      <textarea
+        bind:value={commentText}
+        placeholder={selectedFile ? "Add a comment… (click a spot in the file first)" : "Select a file to add comments"}
+        disabled={!selectedFile}
+      ></textarea>
+      <button on:click={handleSendComment} disabled={!canSend || !selectedFile}>Send</button>
+    </div>
+  {:else}
+    <div class="read-only-notice">
+      <i class="fas fa-lock"></i>
+      <span>View-only mode</span>
+    </div>
+  {/if}
 </aside>
 
 <style>
@@ -253,5 +262,21 @@
 
   .new-comment button:hover:not(:disabled) {
     background: #094166;
+  }
+
+  .read-only-notice {
+    padding: 16px;
+    background: #f7f9fb;
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .read-only-notice i {
+    color: #0c5489;
   }
 </style>

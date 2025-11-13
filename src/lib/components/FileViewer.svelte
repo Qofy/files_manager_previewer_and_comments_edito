@@ -19,6 +19,9 @@
   let showHighlightDialog = false;
   let highlightDialogPos = { x: 0, y: 0 };
   let selectedTextData = null;
+  let showShareDialog = false;
+  let shareUrl = '';
+  let copySuccess = false;
 
   $: zoomPercent = Math.round(zoomLevel * 100);
 
@@ -440,6 +443,34 @@
       });
     });
   }
+
+  function handleShare() {
+    if (!selectedFile) return;
+    
+    // Generate share URL
+    const baseUrl = browser ? window.location.origin : '';
+    shareUrl = `${baseUrl}/share/${selectedFile.id}`;
+    showShareDialog = true;
+    copySuccess = false;
+  }
+
+  async function copyToClipboard() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      copySuccess = true;
+      setTimeout(() => {
+        copySuccess = false;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy URL to clipboard');
+    }
+  }
+
+  function closeShareDialog() {
+    showShareDialog = false;
+    copySuccess = false;
+  }
 </script>
 
 <div class="viewer-container">
@@ -459,6 +490,9 @@
         </select>
       </label>
       {#if selectedFile}
+        <button on:click={handleShare} class="share-btn" title="Share file">
+          <i class="fas fa-share-alt"></i> Share
+        </button>
         <button on:click={closeViewer} class="close-btn">
           <i class="fas fa-times"></i> Close
         </button>
@@ -507,6 +541,45 @@
     <button on:click={() => showHighlightDialog = false} class="cancel-btn">
       <i class="fas fa-times"></i> Cancel
     </button>
+  </div>
+{/if}
+
+{#if showShareDialog}
+  <div class="share-dialog-overlay" on:click={closeShareDialog}>
+    <div class="share-dialog" on:click|stopPropagation>
+      <div class="share-dialog-header">
+        <h3><i class="fas fa-share-alt"></i> Share File</h3>
+        <button class="close-dialog-btn" on:click={closeShareDialog}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="share-dialog-body">
+        <p>Anyone with this link can view this file and its comments</p>
+        
+        <div class="share-url-container">
+          <input 
+            type="text" 
+            readonly 
+            value={shareUrl}
+            class="share-url-input"
+            on:click={(e) => e.target.select()}
+          />
+          <button class="copy-btn" on:click={copyToClipboard}>
+            {#if copySuccess}
+              <i class="fas fa-check"></i> Copied!
+            {:else}
+              <i class="fas fa-copy"></i> Copy
+            {/if}
+          </button>
+        </div>
+        
+        <div class="share-info">
+          <i class="fas fa-info-circle"></i>
+          <span>File: <strong>{selectedFile?.name}</strong></span>
+        </div>
+      </div>
+    </div>
   </div>
 {/if}
 
@@ -762,5 +835,148 @@
     padding-top: 8px !important;
     color: #666 !important;
   }
+
+  /* Share dialog overlay */
+  .share-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+
+  .share-dialog {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    overflow: hidden;
+  }
+
+  .share-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    background: #f7f9fb;
+  }
+
+  .share-dialog-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .share-dialog-header h3 i {
+    color: #0c5489;
+  }
+
+  .close-dialog-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+
+  .close-dialog-btn:hover {
+    background: #e0e0e0;
+  }
+
+  .share-dialog-body {
+    padding: 24px;
+  }
+
+  .share-dialog-body p {
+    margin: 0 0 16px 0;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .share-url-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .share-url-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    color: #333;
+    background: #f7f9fb;
+  }
+
+  .share-url-input:focus {
+    outline: none;
+    border-color: #0c5489;
+  }
+
+  .copy-btn {
+    padding: 10px 16px;
+    background: #0c5489;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .copy-btn:hover {
+    background: #094066;
+  }
+
+  .copy-btn i.fa-check {
+    color: #4caf50;
+  }
+
+  .share-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: #f0f7ff;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #555;
+  }
+
+  .share-info i {
+    color: #0c5489;
+  }
+
+  .share-info strong {
+    color: #333;
+  }
+
+  .share-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
 
 </style>
