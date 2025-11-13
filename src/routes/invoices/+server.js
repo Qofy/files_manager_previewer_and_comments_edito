@@ -34,7 +34,9 @@ const invoices = [
 		total: 8950.0,
 		paid: true,
 		status: 'paid',
-		items: [{ description: 'Consulting Services', quantity: 60, rate: 150, unit_price: 150, amount: 9000 }]
+		items: [
+			{ description: 'Consulting Services', quantity: 60, rate: 150, unit_price: 150, amount: 9000 }
+		]
 	},
 	{
 		id: '3',
@@ -49,7 +51,13 @@ const invoices = [
 		paid: false,
 		status: 'overdue',
 		items: [
-			{ description: 'Software Development', quantity: 80, rate: 120, unit_price: 120, amount: 9600 },
+			{
+				description: 'Software Development',
+				quantity: 80,
+				rate: 120,
+				unit_price: 120,
+				amount: 9600
+			},
 			{ description: 'Project Management', quantity: 30, rate: 90, unit_price: 90, amount: 2700 }
 		]
 	}

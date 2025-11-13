@@ -32,7 +32,7 @@ export async function GET({ request, params }) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
 
-		const profile = profiles.find(p => p.id === params.id);
+		const profile = profiles.find((p) => p.id === params.id);
 		if (!profile) {
 			return json({ error: 'Profile not found' }, { status: 404 });
 		}

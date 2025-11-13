@@ -27,7 +27,7 @@ export async function GET({ request, params }) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
 
-		const client = clients.find(c => c.id === params.id);
+		const client = clients.find((c) => c.id === params.id);
 		if (!client) {
 			return json({ error: 'Client not found' }, { status: 404 });
 		}
