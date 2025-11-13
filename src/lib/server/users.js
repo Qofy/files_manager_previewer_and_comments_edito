@@ -8,5 +8,6 @@ users.set('admin', {
 	id: '1',
 	username: 'admin',
 	password: 'admin123', // In production, hash with bcrypt!
-	createdAt: new Date().toISOString()
+	createdAt: new Date().toISOString(),
+	profileImage: null // Base64 encoded image or URL
 });

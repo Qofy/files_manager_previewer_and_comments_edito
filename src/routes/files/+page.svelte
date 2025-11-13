@@ -29,6 +29,8 @@
   let fileExt = '';
   let dimLabel = '';
   let renderTasks = new Map();
+  let profileImage = null;
+  let currentUsername = null;
   
   const _fileListCache = new Map();
   
@@ -40,9 +42,42 @@
       return;
     }
     
+    // Load user profile
+    try {
+      const token = Auth.token();
+      const res = await fetch('/profile', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const profile = await res.json();
+        profileImage = profile.profileImage;
+        currentUsername = profile.username;
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    }
+    
     mounted = true;
     await loadFolders();
     await loadFiles();
+    
+    // Restore selected file from localStorage after files are loaded
+    if (browser) {
+      const savedFileId = localStorage.getItem('selectedFileId');
+      if (savedFileId) {
+        // Wait a bit for files to be loaded
+        setTimeout(() => {
+          const file = allFiles.find(f => f.id === savedFileId);
+          if (file) {
+            console.log('Restoring previously selected file:', file.name);
+            handleView(file);
+          } else {
+            // File no longer exists, clear from storage
+            localStorage.removeItem('selectedFileId');
+          }
+        }, 500);
+      }
+    }
   });
 
   // Format bytes
@@ -201,6 +236,11 @@
     fileExt = file.type.toLowerCase();
     console.log('File type:', fileExt);
     
+    // Save selected file ID to localStorage for persistence
+    if (browser) {
+      localStorage.setItem('selectedFileId', file.id);
+    }
+    
     if (!browser) {
       console.log('Not in browser environment');
       return;
@@ -254,6 +294,11 @@
     commentsState = [];
     commentText = '';
     dimLabel = '';
+    
+    // Clear selected file from localStorage
+    if (browser) {
+      localStorage.removeItem('selectedFileId');
+    }
   }
 
   // Navigate to folder
@@ -1026,8 +1071,10 @@
 					{#each sortedComments as comment}
 						<div class="comment">
 							<div class="comment-header">
-								<div class="comment-avatar">
-									{(comment.user_id || 'A')[0].toUpperCase()}
+								<div class="comment-avatar" style={profileImage && comment.user_id === currentUsername ? `background-image: url(${profileImage}); background-size: cover; background-position: center;` : ''}>
+									{#if !profileImage || comment.user_id !== currentUsername}
+										{(comment.user_id || 'A')[0].toUpperCase()}
+									{/if}
 								</div>
 								<div class="comment-meta">
 									<strong class="comment-user">{comment.user_id || 'Anonymous'}</strong>

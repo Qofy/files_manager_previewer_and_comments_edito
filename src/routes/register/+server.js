@@ -28,7 +28,8 @@ export async function POST({ request }) {
 			id: Date.now().toString(),
 			username,
 			password, // In production, hash this with bcrypt!
-			createdAt: new Date().toISOString()
+			createdAt: new Date().toISOString(),
+			profileImage: null
 		};
 
 		users.set(username, user);

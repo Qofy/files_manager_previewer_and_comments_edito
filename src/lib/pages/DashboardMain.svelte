@@ -10,6 +10,9 @@ import { onMount } from 'svelte';
 	let chatMessages = [];
 	let burnChartInstance = null;
 	let spendingChartInstance = null;
+	let showProfileMenu = false;
+	let profileImage = null;
+	let fileInput;
 
 	onMount(async () => {
 		if (!Auth.token()) {
@@ -17,12 +20,24 @@ import { onMount } from 'svelte';
 			return;
 		}
 
+		// Load user profile
+		await loadProfile();
+
 		// Load Chart.js
 		const chartScript = document.createElement('script');
 		chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
 		chartScript.onload = () => loadDashboard(rangeMonths);
 		document.head.appendChild(chartScript);
 	});
+
+	async function loadProfile() {
+		try {
+			const profile = await Api('/profile');
+			profileImage = profile.profileImage;
+		} catch (err) {
+			console.error('Failed to load profile:', err);
+		}
+	}
 
 	async function loadDashboard(range) {
 		try {
@@ -190,9 +205,77 @@ import { onMount } from 'svelte';
 		rangeMonths = e.target.value;
 		loadDashboard(rangeMonths);
 	}
+
+	function toggleProfileMenu() {
+		showProfileMenu = !showProfileMenu;
+	}
+
+	function triggerFileInput() {
+		fileInput.click();
+	}
+
+	async function handleImageUpload(e) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		// Validate file type
+		if (!file.type.startsWith('image/')) {
+			alert('Please select an image file');
+			return;
+		}
+
+		// Validate file size (max 2MB)
+		if (file.size > 2 * 1024 * 1024) {
+			alert('Image size must be less than 2MB');
+			return;
+		}
+
+		// Convert to base64
+		const reader = new FileReader();
+		reader.onload = async (event) => {
+			const base64Image = event.target.result;
+			
+			try {
+				const result = await Api('/profile', {
+					method: 'PUT',
+					body: { profileImage: base64Image }
+				});
+				profileImage = result.profileImage;
+				showProfileMenu = false;
+			} catch (err) {
+				console.error('Failed to upload profile image:', err);
+				alert('Failed to upload image');
+			}
+		};
+		reader.readAsDataURL(file);
+	}
+
+	function removeProfileImage() {
+		if (confirm('Remove profile image?')) {
+			Api('/profile', {
+				method: 'PUT',
+				body: { profileImage: null }
+			}).then(result => {
+				profileImage = result.profileImage;
+				showProfileMenu = false;
+			}).catch(err => {
+				console.error('Failed to remove profile image:', err);
+				alert('Failed to remove image');
+			});
+		}
+	}
+
+	// Close menu when clicking outside
+	function handleClickOutside(e) {
+		if (showProfileMenu && !e.target.closest('.profile-container')) {
+			showProfileMenu = false;
+		}
+	}
 </script>
 
-<main class="main-content">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
+<main class="main-content" on:click={handleClickOutside} role="button" tabindex="0">
 		<div class="top-bar">
 			<div class="search-container">
 				<i class="fas fa-search"></i>
@@ -200,10 +283,52 @@ import { onMount } from 'svelte';
 			</div>
 			<div class="actions">
 				<i class="fas fa-bell"></i>
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div class="profile" on:click={handleLogout} role="button" tabindex="0"></div>
+				<div class="profile-container">
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div 
+						class="profile" 
+						on:click={toggleProfileMenu} 
+						role="button" 
+						tabindex="0"
+						style={profileImage ? `background-image: url(${profileImage}); background-size: cover; background-position: center;` : ''}
+					>
+						{#if !profileImage}
+							<i class="fas fa-user"></i>
+						{/if}
+					</div>
+					
+					{#if showProfileMenu}
+						<div class="profile-menu">
+							<div class="menu-header">Profile</div>
+							<button class="menu-item" on:click={triggerFileInput}>
+								<i class="fas fa-camera"></i>
+								{profileImage ? 'Change Photo' : 'Upload Photo'}
+							</button>
+							{#if profileImage}
+								<button class="menu-item" on:click={removeProfileImage}>
+									<i class="fas fa-trash"></i>
+									Remove Photo
+								</button>
+							{/if}
+							<div class="menu-divider"></div>
+							<button class="menu-item" on:click={handleLogout}>
+								<i class="fas fa-sign-out-alt"></i>
+								Logout
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
+
+		<!-- Hidden file input -->
+		<input 
+			type="file" 
+			bind:this={fileInput} 
+			on:change={handleImageUpload}
+			accept="image/*"
+			style="display: none;"
+		/>
 
 		<section class="burnrate-section">
 			<div class="burnrate-header">
@@ -292,12 +417,70 @@ import { onMount } from 'svelte';
 		color: #0c5489;
 		cursor: pointer;
 	}
+	.profile-container {
+		position: relative;
+	}
 	.top-bar .profile {
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
 		background: #0c5489;
 		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: white;
+		font-size: 14px;
+		position: relative;
+		overflow: hidden;
+	}
+	.top-bar .profile:hover {
+		opacity: 0.9;
+	}
+	.profile-menu {
+		position: absolute;
+		top: 45px;
+		right: 0;
+		background: white;
+		border: 1px solid #e0e0e0;
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		min-width: 200px;
+		z-index: 1000;
+		overflow: hidden;
+	}
+	.menu-header {
+		padding: 12px 16px;
+		font-weight: 600;
+		color: #0c5489;
+		border-bottom: 1px solid #e0e0e0;
+		font-size: 14px;
+	}
+	.menu-item {
+		width: 100%;
+		padding: 12px 16px;
+		background: none;
+		border: none;
+		text-align: left;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		color: #333;
+		font-size: 14px;
+		transition: background 0.2s;
+	}
+	.menu-item:hover {
+		background: #f5f5f5;
+	}
+	.menu-item i {
+		width: 16px;
+		color: #0c5489;
+	}
+	.menu-divider {
+		height: 1px;
+		background: #e0e0e0;
+		margin: 4px 0;
 	}
 	.burnrate-section {
 		padding: 20px;
