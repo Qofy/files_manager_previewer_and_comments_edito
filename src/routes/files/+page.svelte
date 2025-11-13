@@ -825,11 +825,10 @@
 							<select bind:value={filterType}>
 								<option value="all">All</option>
 								<option value="pdf">PDF</option>
-								<option value="image">Images</option>
-								<option value="text">Text</option>
+								<option value="documents">Documents</option>
+								<option value="images">Images</option>
+								<option value="videos">Videos</option>
 								<option value="audio">Audio</option>
-								<option value="video">Video</option>
-								<option value="archive">Archives</option>
 								<option value="other">Other</option>
 							</select>
 						</label>
@@ -1007,6 +1006,7 @@
 				{/if}
 			</main>
 		</div>
+
 <!-- Comment Sidebar - Always Visible -->
 		<aside class="comment-sidebar">
 			<header>
@@ -1478,8 +1478,8 @@
   }
   
   .comment-avatar {
-    width: 32px;
-    height: 32px;
+    width: 29px;
+    height: 29px;
     border-radius: 50%;
     background: #0c5489;
     color: white;
@@ -1487,7 +1487,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 20px;
     flex-shrink: 0;
   }
   
@@ -1500,7 +1500,7 @@
   }
   
   .comment-user {
-    font-size: 13px;
+    font-size: 10px;
     font-weight: 600;
     color: #333;
     white-space: nowrap;
@@ -1509,7 +1509,7 @@
   }
   
   .comment-time {
-    font-size: 11px;
+    font-size: 9px;
     color: #999;
   }
   
@@ -1524,8 +1524,9 @@
   }
   
   .comment-text {
-    font-size: 13px;
+    font-size: 16px;
     color: #555;
+		font-weight: 600;
     line-height: 1.5;
     word-wrap: break-word;
   }

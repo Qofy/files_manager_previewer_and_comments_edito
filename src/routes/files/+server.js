@@ -79,7 +79,13 @@ export async function GET({ request, url }) {
 
 	// Apply category filter
 	if (category && category !== 'all') {
-		files = files.filter((file) => file.category === category);
+		if (category === 'pdf') {
+			// Filter by file type for PDF
+			files = files.filter((file) => file.type.toLowerCase() === 'pdf');
+		} else {
+			// Filter by category for other types
+			files = files.filter((file) => file.category === category);
+		}
 	}
 
 	// Apply search filter
