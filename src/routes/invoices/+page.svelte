@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { Auth } from '$lib/utils/auth.js';
 	import { Api } from '$lib/utils/api.js';
-	import Aside from '$lib/pages/Aside.svelte';
+	import Aside from '$lib/components/Aside.svelte';
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 
 	let clientsMap = {};

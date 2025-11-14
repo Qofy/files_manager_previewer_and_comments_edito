@@ -1,5 +1,4 @@
 // Shared in-memory user store
-// In production, replace this with a real database (PostgreSQL, MongoDB, etc.)
 
 export const users = new Map();
 

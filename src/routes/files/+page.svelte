@@ -4,7 +4,7 @@
   import { Auth } from '$lib/utils/auth.js';
   import { Api } from '$lib/utils/api.js';
   import { browser } from '$app/environment';
-  import Aside from '$lib/pages/Aside.svelte';
+  import Aside from '$lib/components/Aside.svelte';
   import TopBar from '$lib/components/TopBar.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import FileManager from '$lib/components/FileManager.svelte';

@@ -1,6 +1,6 @@
 <script>	
 
-	import Aside from '$lib/pages/Aside.svelte';
+	import Aside from '$lib/components/Aside.svelte';
 	import DashboardMain from '$lib/pages/DashboardMain.svelte';
 
 </script>
@@ -17,61 +17,6 @@
 
 <div class="app-container">
 	<Aside/>
-	<!-- <main class="main-content">
-		<div class="top-bar">
-			<div class="search-container">
-				<i class="fas fa-search"></i>
-				<input type="text" placeholder="Search for or jump to" />
-			</div>
-			<div class="actions">
-				<i class="fas fa-bell"></i>
-				<div class="profile" on:click={handleLogout} role="button" tabindex="0"></div>
-			</div>
-		</div>
-
-		<section class="burnrate-section">
-			<div class="burnrate-header">
-				<h2>Burnrate</h2>
-				<div class="burnrate-controls">
-					<select>
-						<option value="revenue" selected>Revenue</option>
-						<option value="total">Total</option>
-					</select>
-					<select value={rangeMonths} on:change={handleDateRangeChange}>
-						<option value="12">Last 12 months</option>
-						<option value="6">Last 6 months</option>
-						<option value="3">Last 3 months</option>
-					</select>
-				</div>
-			</div>
-			<div class="burnrate-info">
-				<div class="runway">{runwayInfo}</div>
-				<div class="burn-value">{burnValue}</div>
-			</div>
-			<div class="burnrate-chart">
-				<canvas id="burnChart"></canvas>
-			</div>
-		</section>
-
-		<section class="widgets-section">
-			<div class="widget assistant">
-				<h3>Assistant</h3>
-				<div class="chat-box">
-					{#each chatMessages as msg}
-						<div class="chat-message {msg.role}">{msg.text}</div>
-					{/each}
-				</div>
-			</div>
-			<div class="widget tracker">
-				<h3>Tracker</h3>
-				<div id="calendar-container" style="overflow-y:auto;"></div>
-			</div>
-			<div class="widget spending">
-				<h3>Spending</h3>
-				<div class="spending-chart"><canvas id="spendingChart"></canvas></div>
-			</div>
-		</section>
-	</main> -->
 <DashboardMain/>
 </div>
 
