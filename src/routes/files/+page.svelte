@@ -30,6 +30,7 @@
   let commentsState = [];
   let scope = 'private';
   let lastClickPos = null;
+  let activeHighlightId = null;
   let profileImage = null;
   let currentUsername = null;
   let showProfileMenu = false;
@@ -485,7 +486,7 @@
 
   async function handleSendComment(event) {
     const text = event.detail.text;
-    const highlightId = event.detail.highlightId; // Optional highlight link
+    const highlightId = activeHighlightId; // Use the stored highlight ID
     if (!text || !selectedFile) return;
 
     const token = Auth.token();
@@ -510,6 +511,7 @@
     
     commentsState = [...commentsState, optimistic];
     commentText = '';
+    activeHighlightId = null; // Clear the highlight link after sending
     if (fileViewer) {
       fileViewer.renderCommentPins(commentsState);
     }
@@ -557,6 +559,9 @@
   function handleHighlightCreated(event) {
     const { highlight } = event.detail;
     
+    // Store the highlight ID to link with the comment
+    activeHighlightId = highlight.id;
+    
     // Pre-fill comment text with the highlighted text
     commentText = `"${highlight.text}"\n\n`;
     
@@ -589,6 +594,20 @@
         x: highlight.x,
         y: highlight.y
       };
+    }
+  }
+
+  function handleScrollToHighlight(event) {
+    const { highlightId } = event.detail;
+    if (fileViewer) {
+      fileViewer.scrollToHighlight(highlightId);
+    }
+  }
+
+  function handleScrollToComment(event) {
+    const { comment } = event.detail;
+    if (fileViewer) {
+      fileViewer.scrollToCommentPin(comment);
     }
   }
 
@@ -681,6 +700,8 @@
       {profileImage}
       {currentUsername}
       on:sendComment={handleSendComment}
+      on:scrollToHighlight={handleScrollToHighlight}
+      on:scrollToComment={handleScrollToComment}
     />
   </main>
 </div>

@@ -20,6 +20,15 @@
     if (readOnly) return;
     dispatch('sendComment', { text: commentText });
   }
+
+  function handleCommentClick(comment) {
+    // Dispatch event to scroll to either highlight or comment location
+    if (comment.highlightId) {
+      dispatch('scrollToHighlight', { highlightId: comment.highlightId });
+    } else {
+      dispatch('scrollToComment', { comment });
+    }
+  }
 </script>
 
 <aside class="comment-sidebar">
@@ -38,7 +47,14 @@
       </div>
     {:else}
       {#each sortedComments as comment}
-        <div class="comment">
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <div 
+          class="comment clickable"
+          on:click={() => handleCommentClick(comment)}
+          on:keydown={(e) => e.key === 'Enter' && handleCommentClick(comment)}
+          role="button"
+          tabindex="0"
+        >
           <div class="comment-header">
             <div class="comment-avatar" style={profileImage && comment.user_id === currentUsername ? `background-image: url(${profileImage}); background-size: cover; background-position: center;` : ''}>
               {#if !profileImage || comment.user_id !== currentUsername}
@@ -159,6 +175,14 @@
   
   .comment:hover {
     background: #f9f9f9;
+  }
+
+  .comment.clickable {
+    cursor: pointer;
+  }
+
+  .comment.clickable:hover {
+    background: #e6f3ff;
   }
   
   .comment-header {

@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import { Auth } from '$lib/utils/auth.js';
   import { browser } from '$app/environment';
+	import { features } from 'process';
 
   export let selectedFile = null;
   export let scope = 'private';
@@ -99,7 +100,29 @@
       console.error('Error loading PDF:', error);
       alert('Failed to load PDF: ' + error.message);
     }
+
+    await loadHighlights();
   }
+
+ async function loadHighlights() {
+    if (!selectedFile?.id) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/pdf/${selectedFile.id}/highlights`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            highlights = await response.json();
+            renderHighlights();
+        }
+    } catch (error) {
+        console.error('Failed to load highlights:', error);
+    }
+}
 
   async function renderPage(pageNumber, scale) {
     if (!pdf) return;
@@ -370,23 +393,43 @@
     showHighlightDialog = true;
   }
 
-  function addHighlight(color = '#ffeb3b') {
+ async function addHighlight(color = '#ffeb3b') {
     if (!selectedTextData) return;
     
-    const highlight = {
-      id: Date.now(),
-      ...selectedTextData,
-      color,
-      comment: null
+      const highlight = {
+        id: Date.now(),
+        text: selectedTextData.text,
+        page: selectedTextData.page,
+        x: selectedTextData.x,
+        y: selectedTextData.y,
+        rangeRect: selectedTextData.rangeRect,
+        color,
+        comment: null
     };
     
     highlights = [...highlights, highlight];
     renderHighlights();
-    showHighlightDialog = false;
     
+    // Save to server
+    try {
+        const token = localStorage.getItem('token');
+        await fetch(`/pdf/${selectedFile.id}/highlights`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(highlight)
+        });
+    } catch (error) {
+        console.error('Failed to save highlight:', error);
+    }
+    
+  
     // Dispatch event to create comment linked to this highlight
     dispatch('highlightCreated', { highlight });
-  }
+}
+
 
   function renderHighlights() {
     if (!pagesEl) return;
@@ -414,6 +457,44 @@
       });
       
       pageDiv.appendChild(overlay);
+    });
+  }
+
+  export function scrollToHighlight(highlightId) {
+    const highlightOverlay = pagesEl?.querySelector(`[data-highlight-id="${highlightId}"]`);
+    if (!highlightOverlay) return;
+    
+    // Scroll the highlight into view
+    highlightOverlay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Add a temporary flash effect
+    highlightOverlay.style.transition = 'opacity 0.3s';
+    highlightOverlay.style.opacity = '0.8';
+    setTimeout(() => {
+        highlightOverlay.style.opacity = '0.3';
+    }, 1000);
+  }
+
+  export function scrollToCommentPin(comment) {
+    if (!pagesEl || !comment) return;
+    
+    // Find the page container
+    const pageContainer = pagesEl.querySelector(`[data-page="${comment.page}"]`);
+    if (!pageContainer) return;
+    
+    // Scroll the page into view
+    pageContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Find and flash all pins on this page (since we can't uniquely identify one pin)
+    const pins = pageContainer.querySelectorAll('.pin');
+    pins.forEach(pin => {
+      pin.style.transition = 'transform 0.3s, color 0.3s';
+      pin.style.transform = 'scale(1.5)';
+      pin.style.color = '#ff0000';
+      setTimeout(() => {
+        pin.style.transform = 'scale(1)';
+        pin.style.color = '';
+      }, 1000);
     });
   }
 
